@@ -1,0 +1,1 @@
+ALTER TABLE `productMedia` ADD `mediaType` enum('front','back','gallery','model3d') DEFAULT 'gallery' NOT NULL;

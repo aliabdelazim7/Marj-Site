@@ -1,0 +1,1 @@
+ALTER TABLE `storeTeamInvites` MODIFY COLUMN `expiresAt` timestamp;

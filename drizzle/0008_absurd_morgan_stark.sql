@@ -1,0 +1,1 @@
+ALTER TABLE `paymentMethods` ADD `whatsappNumber` varchar(16);

@@ -1,0 +1,1 @@
+ALTER TABLE `productVariants` ADD `safetyStock` int DEFAULT 3 NOT NULL;

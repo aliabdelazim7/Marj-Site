@@ -1,0 +1,13 @@
+import { Heart, ShoppingBag, Trash2 } from "lucide-react";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { formatPrice, hoodieProducts, type HoodieProduct } from "@shared/products";
+import { trpc } from "@/lib/trpc";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { useCart } from "@/contexts/CartContext";
+import StoreHeader from "@/components/StoreHeader";
+import { useLanguage } from "@/contexts/LanguageContext";
+export default function Favorites() {
+  const wishlist = useWishlist(); const cart = useCart(); const { language } = useLanguage(); const productsQuery = trpc.products.list.useQuery(); const products = ((productsQuery.data ?? hoodieProducts) as HoodieProduct[]).filter((product) => wishlist.has(product.id, product.databaseId));
+  return <div className="site-shell min-h-screen"><StoreHeader meta={`FAVORITES / ${wishlist.count}`} /><main className="container commerce-page"><div className="commerce-heading"><div><p className="kicker"><span className="red-block" /> {language === "en" ? "Wishlist" : "المفضلة"}</p><h1>{language === "en" ? <>Pieces<br /><em>you love.</em></> : <>قطع<br /><em>تحبّها.</em></>}</h1></div><p className="section-aside">{language === "en" ? <>Save pieces you want to revisit.<br />Eligible catalog favorites sync to a signed-in account.</> : <>احفظ القطع التي تريد الرجوع إليها.<br />مفضلة منتجات الكتالوج تتزامن مع حسابك عند تسجيل الدخول.</>}</p></div>{!products.length ? <div className="empty-commerce"><Heart size={30} /><h2>{language === "en" ? "No saved pieces" : "مفيش قطع محفوظة"}</h2><p>{language === "en" ? "Tap the heart on any product to see it here." : "اضغط على القلب في أي منتج ليظهر هنا."}</p><Link href="/#collection"><Button>{language === "en" ? "Explore the collection" : "استكشف المجموعة"}</Button></Link></div> : <div className="favorites-grid">{products.map((product) => <article className="favorite-card" key={product.id}><Link href={`/product/${product.slug}`}><img src={product.images[0]} alt={language === "en" ? `${product.name} hoodie` : product.nameArabic} /></Link><div><p className="eyebrow">{product.name}</p><h2>{language === "en" ? product.name : product.nameArabic}</h2><strong>{formatPrice(product.price)}</strong><div className="favorite-actions"><Button onClick={() => cart.add(product, "M")}>{language === "en" ? "Add to cart" : "أضف للسلة"} <ShoppingBag size={15} /></Button><button onClick={() => wishlist.toggle(product.id, product.databaseId)} aria-label={language === "en" ? `Remove ${product.name}` : `إزالة ${product.nameArabic}`}><Trash2 size={16} /></button></div></div></article>)}</div>}</main></div>;
+}
