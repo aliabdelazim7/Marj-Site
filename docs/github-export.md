@@ -4,7 +4,7 @@
 
 ## Included
 
-سيتم تضمين source code كاملًا للواجهة والخادم والـshared modules، مكونات UI، `package.json` و`pnpm-lock.yaml`، `tsconfig.json` وVite/Drizzle/Vitest configuration، migrations من `0000` إلى `0012`، schema وrelations، جميع اختبارات Vitest، التوثيق الموجود في `docs/` و`notes/`، `todo.md`، و`verification-notes.md`. سيتم تضمين standalone WordPress Virtual Try-On package إن كان موجودًا ضمن المشروع، مع توثيق أنه مسار منفصل عن runtime الحالي.
+سيتم تضمين source code كاملًا للواجهة والخادم والـshared modules، مكونات UI، `package.json` و`pnpm-lock.yaml`، `tsconfig.json` وVite/Drizzle/Vitest configuration، migrations من `0000` إلى `0012`، schema وrelations، جميع اختبارات Vitest، التوثيق الموجود في `docs/` و`notes/` بما فيه `docs/HANDOFF.md` و`docs/environment.md`، `todo.md`، و`verification-notes.md`. سيتم تضمين standalone WordPress Virtual Try-On package إن كان موجودًا ضمن المشروع، مع توثيق أنه مسار منفصل عن runtime الحالي.
 
 ## Excluded
 

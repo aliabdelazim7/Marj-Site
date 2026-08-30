@@ -414,3 +414,10 @@ Privacy copy now states that the visitor photo is sent only for the preview requ
 - [x] Verify secrets, environment files, generated artifacts, local logs, and sensitive data are excluded while source code and required migrations/docs remain included.
 - [x] Commit and push the complete site project to `aliabdelazim7/Marg-Site`, then verify the remote tree and commit contents.
 - [x] Record the repository URL and export details in project documentation and deliver them to the owner.
+
+
+## Detailed handoff documentation — 2026-08-30
+- [x] Write a clear Arabic-first technical handoff covering project goal, scope, current state, architecture, routes, database, auth, integrations, privacy, testing, and deployment.
+- [x] Document every intentional limitation, deferred item, operational prerequisite, and prohibited behavior so the next team does not fabricate data or re-enable excluded integrations accidentally.
+- [x] Add a prioritized continuation plan with file locations, migration rules, QA gates, rollback guidance, and a first-session checklist.
+- [x] Copy the handoff into the GitHub repository, validate the document against the current source and tests, commit, push, and record the final link.
