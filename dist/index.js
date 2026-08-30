@@ -1767,7 +1767,7 @@ var isDirectProductImageUrl = (value) => {
 };
 var productImageUrlSchema = z2.string().trim().max(2e3).refine(isDirectProductImageUrl, "\u0627\u0644\u0635\u0648\u0631\u0629 \u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629 \u064A\u062C\u0628 \u0623\u0646 \u062A\u0643\u0648\u0646 \u0631\u0627\u0628\u0637 \u0645\u0644\u0641 \u0635\u0648\u0631\u0629 \u0645\u0628\u0627\u0634\u0631\u064B\u0627 \u0645\u062B\u0644 JPG \u0623\u0648 PNG \u0623\u0648 WEBP\u060C \u0648\u0644\u064A\u0633\u062A \u0635\u0641\u062D\u0629 \u0645\u062A\u062C\u0631 \u0623\u0648 \u0631\u0627\u0628\u0637 3D.");
 var mediaTypeSchema = z2.enum(["front", "back", "gallery", "model3d"]);
-var productAdminInputSchema = z2.object({
+var productAdminInputShape = z2.object({
   slug: z2.string().trim().min(2).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "\u0627\u0633\u062A\u062E\u062F\u0645 slug \u0625\u0646\u062C\u0644\u064A\u0632\u064A\u064B\u0627 \u0628\u0634\u0631\u0637\u0627\u062A \u0641\u0642\u0637"),
   name: z2.string().trim().min(2).max(160),
   nameArabic: z2.string().trim().min(2).max(160),
@@ -1784,7 +1784,8 @@ var productAdminInputSchema = z2.object({
   manageStock: z2.boolean().default(true),
   stockStatus: stockStatusSchema.default("instock"),
   status: productStatusSchema.default("draft")
-}).superRefine((value, ctx) => {
+});
+var productAdminInputSchema = productAdminInputShape.superRefine((value, ctx) => {
   if (value.salePrice !== null && value.salePrice !== void 0 && value.salePrice >= value.price) {
     ctx.addIssue({ code: "custom", path: ["salePrice"], message: "\u0633\u0639\u0631 \u0627\u0644\u062A\u062E\u0641\u064A\u0636 \u064A\u062C\u0628 \u0623\u0646 \u064A\u0643\u0648\u0646 \u0623\u0642\u0644 \u0645\u0646 \u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064A" });
   }
@@ -1792,7 +1793,22 @@ var productAdminInputSchema = z2.object({
     ctx.addIssue({ code: "custom", path: ["compareAtPrice"], message: "\u0627\u0644\u0633\u0639\u0631 \u0642\u0628\u0644 \u0627\u0644\u062E\u0635\u0645 \u064A\u062C\u0628 \u0623\u0644\u0627 \u064A\u0642\u0644 \u0639\u0646 \u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064A" });
   }
 });
-var productAdminUpdateSchema = productAdminInputSchema.partial();
+var productAdminUpdateSchema = productAdminInputShape.partial().superRefine((value, ctx) => {
+  if (value.price !== void 0 && value.salePrice !== null && value.salePrice !== void 0 && value.salePrice >= value.price) {
+    ctx.addIssue({ code: "custom", path: ["salePrice"], message: "\u0633\u0639\u0631 \u0627\u0644\u062A\u062E\u0641\u064A\u0636 \u064A\u062C\u0628 \u0623\u0646 \u064A\u0643\u0648\u0646 \u0623\u0642\u0644 \u0645\u0646 \u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064A" });
+  }
+  if (value.price !== void 0 && value.compareAtPrice !== null && value.compareAtPrice !== void 0 && value.compareAtPrice < value.price) {
+    ctx.addIssue({ code: "custom", path: ["compareAtPrice"], message: "\u0627\u0644\u0633\u0639\u0631 \u0642\u0628\u0644 \u0627\u0644\u062E\u0635\u0645 \u064A\u062C\u0628 \u0623\u0644\u0627 \u064A\u0642\u0644 \u0639\u0646 \u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064A" });
+  }
+});
+var productAdminUpdateInputSchema = productAdminInputShape.partial().extend({ id: z2.number().int().positive() }).superRefine((value, ctx) => {
+  if (value.price !== void 0 && value.salePrice !== null && value.salePrice !== void 0 && value.salePrice >= value.price) {
+    ctx.addIssue({ code: "custom", path: ["salePrice"], message: "\u0633\u0639\u0631 \u0627\u0644\u062A\u062E\u0641\u064A\u0636 \u064A\u062C\u0628 \u0623\u0646 \u064A\u0643\u0648\u0646 \u0623\u0642\u0644 \u0645\u0646 \u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064A" });
+  }
+  if (value.price !== void 0 && value.compareAtPrice !== null && value.compareAtPrice !== void 0 && value.compareAtPrice < value.price) {
+    ctx.addIssue({ code: "custom", path: ["compareAtPrice"], message: "\u0627\u0644\u0633\u0639\u0631 \u0642\u0628\u0644 \u0627\u0644\u062E\u0635\u0645 \u064A\u062C\u0628 \u0623\u0644\u0627 \u064A\u0642\u0644 \u0639\u0646 \u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064A" });
+  }
+});
 var variantAdminInputSchema = z2.object({
   productId: z2.number().int().positive(),
   sku: z2.string().trim().min(1).max(80),
@@ -1868,9 +1884,23 @@ var teamRoleSchema = z2.enum(["order_operator", "catalog_editor", "analytics_vie
 var inviteTokenSchema = z2.string().trim().min(32).max(160);
 var inviteExpirySchema = z2.union([z2.literal(24), z2.literal(72), z2.literal(168), z2.literal(720), z2.literal("unlimited")]).default(168);
 var hashInviteToken = (token) => createHash("sha256").update(token).digest("hex");
-var couponInputSchema = z2.object({ code: z2.string().trim().min(3).max(80).regex(/^[A-Za-z0-9_-]+$/), type: z2.enum(["percentage", "fixed"]), value: z2.number().int().positive().max(1e6), minimumSubtotal: z2.number().int().min(0).max(1e7).default(0), usageLimit: z2.number().int().positive().max(1e6).nullable(), startsAt: z2.coerce.date(), expiresAt: z2.coerce.date().nullable(), enabled: z2.boolean() }).superRefine((input, ctx) => {
+var couponInputShape = z2.object({
+  code: z2.string().trim().min(3).max(80).regex(/^[A-Za-z0-9_-]+$/),
+  type: z2.enum(["percentage", "fixed"]),
+  value: z2.number().int().positive().max(1e6),
+  minimumSubtotal: z2.number().int().min(0).max(1e7).default(0),
+  usageLimit: z2.number().int().positive().max(1e6).nullable(),
+  startsAt: z2.coerce.date(),
+  expiresAt: z2.coerce.date().nullable(),
+  enabled: z2.boolean()
+});
+var couponInputSchema = couponInputShape.superRefine((input, ctx) => {
   if (input.type === "percentage" && input.value > 100) ctx.addIssue({ code: "custom", path: ["value"], message: "\u0646\u0633\u0628\u0629 \u0627\u0644\u062E\u0635\u0645 \u0644\u0627 \u062A\u062A\u062C\u0627\u0648\u0632 100%." });
   if (input.expiresAt && input.expiresAt <= input.startsAt) ctx.addIssue({ code: "custom", path: ["expiresAt"], message: "\u062A\u0627\u0631\u064A\u062E \u0627\u0644\u0627\u0646\u062A\u0647\u0627\u0621 \u064A\u062C\u0628 \u0623\u0646 \u064A\u0623\u062A\u064A \u0628\u0639\u062F \u0627\u0644\u0628\u062F\u0627\u064A\u0629." });
+});
+var couponUpdateInputSchema = couponInputShape.partial().extend({ id: z2.number().int().positive() }).superRefine((input, ctx) => {
+  if (input.type === "percentage" && input.value !== void 0 && input.value > 100) ctx.addIssue({ code: "custom", path: ["value"], message: "\u0646\u0633\u0628\u0629 \u0627\u0644\u062E\u0635\u0645 \u0644\u0627 \u062A\u062A\u062C\u0627\u0648\u0632 100%." });
+  if (input.startsAt && input.expiresAt && input.expiresAt <= input.startsAt) ctx.addIssue({ code: "custom", path: ["expiresAt"], message: "\u062A\u0627\u0631\u064A\u062E \u0627\u0644\u0627\u0646\u062A\u0647\u0627\u0621 \u064A\u062C\u0628 \u0623\u0646 \u064A\u0623\u062A\u064A \u0628\u0639\u062F \u0627\u0644\u0628\u062F\u0627\u064A\u0629." });
 });
 var fulfillmentInputSchema = z2.object({ id: z2.number().int().positive(), shipmentCarrier: z2.string().trim().max(120).nullable(), trackingNumber: z2.string().trim().max(160).nullable(), trackingUrl: z2.string().trim().max(2e3).url().nullable() });
 var inventoryAdjustmentInputSchema = z2.object({ variantId: z2.number().int().positive(), delta: z2.number().int().min(-1e5).max(1e5).refine((value) => value !== 0), reason: z2.string().trim().min(3).max(240) });
@@ -1937,7 +1967,7 @@ var appRouter = router({
       list: catalogProcedure.query(() => getAdminCatalog()),
       get: catalogProcedure.input(positiveIdSchema).query(({ input }) => getAdminProduct(input.id)),
       create: catalogProcedure.input(productAdminInputSchema).mutation(({ input }) => createCatalogProduct(input)),
-      update: catalogProcedure.input(productAdminUpdateSchema.extend({ id: z2.number().int().positive() })).mutation(({ input }) => {
+      update: catalogProcedure.input(productAdminUpdateInputSchema).mutation(({ input }) => {
         const { id, ...values } = input;
         return updateCatalogProduct(id, values);
       }),
@@ -2017,7 +2047,7 @@ var appRouter = router({
     coupons: router({
       list: adminProcedure2.query(() => listCoupons()),
       create: adminProcedure2.input(couponInputSchema).mutation(({ input }) => createCoupon(input)),
-      update: adminProcedure2.input(couponInputSchema.partial().extend({ id: z2.number().int().positive() })).mutation(({ input }) => {
+      update: adminProcedure2.input(couponUpdateInputSchema).mutation(({ input }) => {
         const { id, ...values } = input;
         return updateCoupon(id, values);
       })
