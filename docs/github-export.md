@@ -20,4 +20,4 @@
 
 ## Release traceability
 
-آخر checkpoint منشور قبل هذا التصدير هو `1425b591`. إصلاح parity في محرر المنتج الجديد يجعل أقسام الصور/GLB والـvariations ظاهرة قبل الحفظ مع تعطيلها إلى أن يتوفر `productId`. يتم تسجيل commit GitHub النهائي في هذه الوثيقة بعد اكتمال push والتحقق من remote tree.
+آخر checkpoint منشور قبل هذا التصدير هو `1425b591`. إصلاح parity في محرر المنتج الجديد يجعل أقسام الصور/GLB والـvariations ظاهرة قبل الحفظ مع تعطيلها إلى أن يتوفر `productId`. تم رفع النسخة إلى [aliabdelazim7/Marg-Site](https://github.com/aliabdelazim7/Marg-Site) وهو Private حاليًا. commit التصدير هو [`6eee8c09a2d1d9f8150f29df0b181202d6b92392`](https://github.com/aliabdelazim7/Marg-Site/commit/6eee8c09a2d1d9f8150f29df0b181202d6b92392)، وتمت مطابقة `origin/main` مع هذا الـSHA.

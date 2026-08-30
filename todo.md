@@ -409,8 +409,8 @@ Privacy copy now states that the visitor photo is sent only for the preview requ
 
 
 ## GitHub repository export — 2026-08-25
-- [ ] Audit the selected GitHub repository and current project diff before export.
-- [ ] Prepare complete project documentation covering architecture, features, migrations, testing, deployment, integrations, limitations, and operational setup.
-- [ ] Verify secrets, environment files, generated artifacts, local logs, and sensitive data are excluded while source code and required migrations/docs remain included.
-- [ ] Commit and push the complete site project to `aliabdelazim7/Marg-Site`, then verify the remote tree and commit contents.
-- [ ] Record the repository URL and export details in project documentation and deliver them to the owner.
+- [x] Audit the selected GitHub repository and current project diff before export.
+- [x] Prepare complete project documentation covering architecture, features, migrations, testing, deployment, integrations, limitations, and operational setup.
+- [x] Verify secrets, environment files, generated artifacts, local logs, and sensitive data are excluded while source code and required migrations/docs remain included.
+- [x] Commit and push the complete site project to `aliabdelazim7/Marg-Site`, then verify the remote tree and commit contents.
+- [x] Record the repository URL and export details in project documentation and deliver them to the owner.
