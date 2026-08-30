@@ -4,7 +4,7 @@
 
 **الهدف من الوثيقة:** تمكين أي Technical Team أو Developer جديد من فهم سبب بناء متجر مرج، وما تم إنجازه، وما هي القرارات التي يجب عدم كسرها، وكيف يبدأ العمل بأقل وقت ضائع وأقل مخاطرة.
 
-> اقرأ هذه الوثيقة مع `README.md` و`docs/environment.md` و`verification-notes.md` و`todo.md`. مصدر الكود المرفوع هو [aliabdelazim7/Marg-Site](https://github.com/aliabdelazim7/Marg-Site)، والريبو Private. لا توجد credentials في الريبو.
+> اقرأ هذه الوثيقة مع `README.md` و`docs/environment.md` و`verification-notes.md` و`todo.md`. مصدر الكود المرفوع هو [aliabdelazim7/Marj-Site](https://github.com/aliabdelazim7/Marj-Site)، والريبو Private. لا توجد credentials في الريبو.
 
 ---
 

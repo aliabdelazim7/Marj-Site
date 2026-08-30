@@ -1,6 +1,6 @@
 # GitHub export record
 
-هذه الوثيقة تصف النسخة التي ستُرفع إلى `aliabdelazim7/Marg-Site`. تم جعل الريبو Private قبل الرفع، لكن الخصوصية لا تغيّر قاعدة عدم وضع credentials أو بيانات شخصية داخل Git history.
+هذه الوثيقة تصف النسخة التي ستُرفع إلى `aliabdelazim7/Marj-Site`. تم جعل الريبو Private قبل الرفع، لكن الخصوصية لا تغيّر قاعدة عدم وضع credentials أو بيانات شخصية داخل Git history.
 
 ## Included
 
@@ -20,4 +20,4 @@
 
 ## Release traceability
 
-آخر checkpoint منشور قبل هذا التصدير هو `1425b591`. إصلاح parity في محرر المنتج الجديد يجعل أقسام الصور/GLB والـvariations ظاهرة قبل الحفظ مع تعطيلها إلى أن يتوفر `productId`. تم رفع النسخة إلى [aliabdelazim7/Marg-Site](https://github.com/aliabdelazim7/Marg-Site) وهو Private حاليًا. commit التصدير هو [`6eee8c09a2d1d9f8150f29df0b181202d6b92392`](https://github.com/aliabdelazim7/Marg-Site/commit/6eee8c09a2d1d9f8150f29df0b181202d6b92392)، وتمت مطابقة `origin/main` مع هذا الـSHA.
+آخر checkpoint منشور قبل هذا التصدير هو `1425b591`. إصلاح parity في محرر المنتج الجديد يجعل أقسام الصور/GLB والـvariations ظاهرة قبل الحفظ مع تعطيلها إلى أن يتوفر `productId`. تم رفع النسخة إلى [aliabdelazim7/Marj-Site](https://github.com/aliabdelazim7/Marj-Site) وهو Private حاليًا. commit التصدير هو [`6eee8c09a2d1d9f8150f29df0b181202d6b92392`](https://github.com/aliabdelazim7/Marj-Site/commit/6eee8c09a2d1d9f8150f29df0b181202d6b92392)، وتمت مطابقة `origin/main` مع هذا الـSHA.

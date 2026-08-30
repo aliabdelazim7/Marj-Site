@@ -371,6 +371,6 @@ The polished UI checkpoint was saved successfully as version `c82af04d` after th
 
 ## GitHub export verification — 2026-08-30
 
-تم فحص الريبو `https://github.com/aliabdelazim7/Marg-Site` قبل الرفع وتحويل خصوصيته إلى Private. تم رفع مصدر متجر مرج كاملًا إلى branch `main` في commit `6eee8c09a2d1d9f8150f29df0b181202d6b92392`، وتطابق `git ls-remote origin refs/heads/main` مع الـSHA المحلي. النسخة تتضمن source code والواجهة والخادم وshared modules وschema والـmigrations من `0000` إلى `0012` والاختبارات والتوثيق وملفات الإعداد اللازمة.
+تم فحص الريبو `https://github.com/aliabdelazim7/Marj-Site` قبل الرفع وتحويل خصوصيته إلى Private. تم رفع مصدر متجر مرج كاملًا إلى branch `main` في commit `6eee8c09a2d1d9f8150f29df0b181202d6b92392`، وتطابق `git ls-remote origin refs/heads/main` مع الـSHA المحلي. النسخة تتضمن source code والواجهة والخادم وshared modules وschema والـmigrations من `0000` إلى `0012` والاختبارات والتوثيق وملفات الإعداد اللازمة.
 
 تم استبعاد `.env` وملفات credentials والمفاتيح والشهادات و`node_modules` و`dist` و`.manus-logs` و`.project-config.json` وملفات version/debug وملفات قواعد البيانات المحلية. فحص أسماء الملفات ومسح literals الشائعة للمفاتيح لم يعثر على أسرار. تم تثبيت الاعتمادات من lockfile داخل clone مستقل، ونجح `pnpm check` و`pnpm test` بنتيجة 26 ملفًا و67 اختبارًا و`pnpm build`. توجد ملاحظة build غير حاجبة عن bundle أكبر من 500KB.
