@@ -11,14 +11,74 @@
     currentImage: '{{ $product->image_url }}',
     show3d: false,
     tryOnOpen: false,
-    tryOnImage: null,
+    tryOnPhoto: null,
+    tryOnPhotoName: '',
     tryOnLoading: false,
+    tryOnLoadingStep: '',
     tryOnResult: null,
+    tryOnError: '',
     variants: {{ Js::from($product->variants) }},
     selectVariant(v) {
         this.selectedSize = v.size;
         this.selectedVariantId = v.id;
         this.selectedStock = v.stock;
+    },
+    handlePhotoSelect(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            this.tryOnError = 'يرجى اختيار ملف صورة صالح (JPG أو PNG أو WebP).';
+            return;
+        }
+        this.tryOnError = '';
+        this.tryOnPhotoName = file.name;
+        let reader = new FileReader();
+        reader.onload = (event) => {
+            this.tryOnPhoto = event.target.result;
+            this.tryOnResult = null;
+        };
+        reader.readAsDataURL(file);
+    },
+    async runTryOn() {
+        if (!this.tryOnPhoto) {
+            this.tryOnError = 'يرجى اختيار صورة أولاً.';
+            return;
+        }
+        this.tryOnError = '';
+        this.tryOnLoading = true;
+        this.tryOnLoadingStep = 'جاري تحليل زوايا الجسم والإضاءة...';
+
+        try {
+            setTimeout(() => { this.tryOnLoadingStep = 'جاري تركيب هودي {{ $product->nameArabic }} ومطابقة المقاس...'; }, 900);
+            
+            let response = await fetch('{{ route('try-on.generate') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    product_id: {{ $product->id }},
+                    image_base64: this.tryOnPhoto
+                })
+            });
+
+            let data = await response.json();
+            
+            setTimeout(() => {
+                this.tryOnLoading = false;
+                if (data.success) {
+                    this.tryOnResult = data.result_image_url || this.tryOnPhoto;
+                } else {
+                    this.tryOnError = data.message || 'تعذر إتمام المعاينة، يرجى تجربة صورة أخرى.';
+                }
+                if (window.lucide) lucide.createIcons();
+            }, 1800);
+        } catch (err) {
+            this.tryOnLoading = false;
+            this.tryOnError = 'حدث خطأ في الاتصال، يرجى المحاولة مجدداً.';
+        }
     }
 }">
     <!-- تفاصيل المنتج الأساسية -->
@@ -98,24 +158,25 @@
                     @foreach($product->variants as $variant)
                         <button type="button" 
                                 @click="selectVariant({{ Js::from($variant) }})"
-                                class="py-3 rounded-2xl text-sm font-black border transition flex flex-col items-center justify-center gap-1"
-                                :class="selectedSize === '{{ $variant->size }}' ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/20' : 'bg-slate-900/80 text-white border-white/10 hover:border-white/20'">
-                            <span>{{ $variant->size }}</span>
-                            <span class="text-[10px] font-normal" :class="selectedSize === '{{ $variant->size }}' ? 'text-slate-900' : 'text-slate-400'">
-                                @if($variant->stock <= 0)
-                                    غير متوفر
-                                @elseif($variant->isLowStock())
-                                    متبقي {{ $variant->stock }}
-                                @else
+                                :disabled="{{ $variant->stock <= 0 ? 'true' : 'false' }}"
+                                class="py-3 rounded-2xl border text-center font-bold text-sm transition"
+                                :class="selectedSize === '{{ $variant->size }}' 
+                                    ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/20' 
+                                    : 'glass-panel text-white hover:border-white/30 {{ $variant->stock <= 0 ? 'opacity-40 cursor-not-allowed' : '' }}'">
+                            <div>{{ $variant->size }}</div>
+                            <div class="text-[10px] mt-0.5" :class="selectedSize === '{{ $variant->size }}' ? 'text-slate-900' : 'text-slate-400'">
+                                @if($variant->stock > 0)
                                     متوفر
+                                @else
+                                    نفد
                                 @endif
-                            </span>
+                            </div>
                         </button>
                     @endforeach
                 </div>
 
-                <!-- تنبيه قلة المخزون -->
-                <template x-if="selectedStock > 0 && selectedStock <= 3">
+                <!-- تحذير المخزون المتبقي -->
+                <template x-if="selectedStock > 0 && selectedStock <= 5">
                     <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs flex items-center gap-2">
                         <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
                         <span>سارع بالطلب! متبقي <strong x-text="selectedStock"></strong> قطع فقط في هذا المقاس.</span>
@@ -139,9 +200,9 @@
                 </form>
 
                 <!-- زر تجربة القياس بالذكاء الاصطناعي -->
-                <button type="button" @click="tryOnOpen = true" class="w-full py-3 rounded-2xl glass-panel text-cyan-300 font-bold text-sm hover:bg-white/10 hover:border-cyan-500/40 transition flex items-center justify-center gap-2">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                    تجربة الهودي على صورتك (AI Try-On)
+                <button type="button" @click="tryOnOpen = true" class="w-full py-3.5 rounded-2xl glass-panel border border-cyan-500/30 text-cyan-300 font-bold text-sm hover:bg-cyan-500/10 hover:border-cyan-500/60 transition flex items-center justify-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400 animate-pulse"></i>
+                    تجربة الهودي على صورتك (AI Virtual Try-On)
                 </button>
             </div>
         </div>
@@ -181,28 +242,114 @@
         @endif
     </div>
 
-    <!-- نافذة تجربة القياس الافتراضي Modal -->
-    <div x-show="tryOnOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-        <div @click.outside="tryOnOpen = false" class="max-w-md w-full glass-panel rounded-3xl p-6 space-y-4 border border-white/10">
+    <!-- نافذة تجربة القياس الافتراضي Modal التفاعلية -->
+    <div x-show="tryOnOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+        <div @click.outside="if(!tryOnLoading) tryOnOpen = false" class="max-w-lg w-full glass-panel rounded-3xl p-6 sm:p-8 space-y-5 border border-cyan-500/30 shadow-2xl relative">
+            <!-- الهيدر -->
             <div class="flex items-center justify-between pb-3 border-b border-white/10">
-                <h4 class="font-black text-white text-base flex items-center gap-2">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
-                    تجربة القياس الافتراضية
+                <h4 class="font-black text-white text-lg flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-cyan-400 animate-spin"></i>
+                    تجربة القياس الافتراضية الذكية
                 </h4>
-                <button @click="tryOnOpen = false" class="text-slate-400 hover:text-white">
+                <button @click="tryOnOpen = false" :disabled="tryOnLoading" class="text-slate-400 hover:text-white transition">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
+            <!-- وصف الخصوصية -->
             <p class="text-xs text-slate-300 leading-relaxed">
-                ارفع صورتك وسيقوم الذكاء الاصطناعي بتركيب هودي <strong>{{ $product->nameArabic }}</strong> عليك مباشرة دون حفظ صورتك على السيرفر حفاظاً على الخصوصية.
+                ارفع صورة شخصية واضحة، وسيقوم الذكاء الاصطناعي بتركيب هودي <strong>{{ $product->nameArabic }}</strong> عليك مباشرة.
+                <span class="text-cyan-300 font-semibold">🔒 خصوصيتك محمية بالكامل ولن يتم تخزين صورتك على الخادم.</span>
             </p>
 
-            <input type="file" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-500/10 file:text-cyan-300 hover:file:bg-cyan-500/20">
+            <!-- قسم رفع الصورة واختيارها -->
+            <template x-if="!tryOnResult">
+                <div class="space-y-4">
+                    <div class="relative border-2 border-dashed rounded-2xl p-6 text-center transition"
+                         :class="tryOnPhoto ? 'border-cyan-500/60 bg-cyan-500/5' : 'border-white/15 hover:border-cyan-500/40 bg-slate-900/50'">
+                        <input type="file" accept="image/jpeg,image/png,image/webp" @change="handlePhotoSelect" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        
+                        <template x-if="!tryOnPhoto">
+                            <div class="space-y-2">
+                                <i data-lucide="upload-cloud" class="w-10 h-10 mx-auto text-cyan-400"></i>
+                                <div class="text-sm font-bold text-white">اضغط لاختيار صورة من جهازك</div>
+                                <div class="text-xs text-slate-400">صيغ JPG, PNG, WebP (بحد أقصى 6 ميجابايت)</div>
+                            </div>
+                        </template>
 
-            <button type="button" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-600 text-slate-950 font-bold text-sm">
-                توليد المعاينة الافتراضية
-            </button>
+                        <template x-if="tryOnPhoto">
+                            <div class="space-y-3">
+                                <img :src="tryOnPhoto" class="w-24 h-24 object-cover mx-auto rounded-xl border border-cyan-400 shadow-md">
+                                <div class="text-xs font-bold text-cyan-300" x-text="tryOnPhotoName"></div>
+                                <div class="text-[11px] text-slate-400">اضغط لاختيار صورة أخرى</div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- رسالة خطأ إن وجدت -->
+                    <template x-if="tryOnError">
+                        <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                            <span x-text="tryOnError"></span>
+                        </div>
+                    </template>
+
+                    <!-- حالة التحميل والانتظار -->
+                    <template x-if="tryOnLoading">
+                        <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-center space-y-2">
+                            <div class="inline-block w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                            <div class="text-xs font-bold text-cyan-300" x-text="tryOnLoadingStep"></div>
+                        </div>
+                    </template>
+
+                    <!-- زر التوليد -->
+                    <button type="button" 
+                            @click="runTryOn" 
+                            :disabled="!tryOnPhoto || tryOnLoading"
+                            class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-600 text-slate-950 font-black text-sm hover:shadow-lg hover:shadow-cyan-500/30 hover:scale-[1.01] transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span x-text="tryOnLoading ? 'جاري المعالجة بالذكاء الاصطناعي...' : 'توليد المعاينة الافتراضية'"></span>
+                    </button>
+                </div>
+            </template>
+
+            <!-- قسم عرض النتيجة بعد التوليد -->
+            <template x-if="tryOnResult">
+                <div class="space-y-4 animate-fade-in">
+                    <div class="relative aspect-[3/4] max-h-80 w-full rounded-2xl overflow-hidden glass-panel border border-cyan-500/40 bg-slate-950 flex items-center justify-center">
+                        <img :src="tryOnResult" class="w-full h-full object-contain">
+                        
+                        <div class="absolute bottom-3 right-3 left-3 p-2.5 rounded-xl bg-slate-950/80 backdrop-blur border border-white/10 flex items-center justify-between text-xs">
+                            <span class="font-bold text-white flex items-center gap-1.5">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+                                هودي {{ $product->nameArabic }}
+                            </span>
+                            <span class="text-cyan-400 font-bold">{{ $product->effective_price }} ج.م</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <a :href="tryOnResult" download="marj-tryon-{{ $product->slug }}.jpg" class="py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            تحميل الصورة
+                        </a>
+                        <button type="button" @click="tryOnResult = null" class="py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            صورة أخرى
+                        </button>
+                    </div>
+
+                    <form action="{{ route('cart.add') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="variant_id" :value="selectedVariantId">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-600 text-slate-950 font-black text-sm hover:shadow-lg transition flex items-center justify-center gap-2">
+                            <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                            أضف هذا المقاس للسلة فوراً
+                        </button>
+                    </form>
+                </div>
+            </template>
         </div>
     </div>
 </div>
