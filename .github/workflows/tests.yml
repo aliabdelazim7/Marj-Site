@@ -26,10 +26,13 @@ jobs:
         coverage: none
 
     - name: Copy Environment File
-      run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+      run: cp .env.example .env
+
+    - name: Create Storage and Cache Directories
+      run: mkdir -p bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/cache/data storage/logs
 
     - name: Install Composer Dependencies
-      run: composer update --prefer-dist --no-interaction --no-progress
+      run: composer install --prefer-dist --no-interaction --no-progress
 
     - name: Generate Application Key
       run: php artisan key:generate
