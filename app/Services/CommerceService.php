@@ -20,10 +20,18 @@ class CommerceService {
     ) {}
 
     public function getOrCreateCart(string $sessionKey, ?int $userId = null): Cart {
-        $cart = Cart::firstOrCreate(
-            ['session_key' => $sessionKey],
-            ['user_id' => $userId]
-        );
+        $cart = null;
+        if (session()->has('cart_id')) {
+            $cart = Cart::find(session('cart_id'));
+        }
+
+        if (!$cart) {
+            $cart = Cart::firstOrCreate(
+                ['session_key' => $sessionKey],
+                ['user_id' => $userId]
+            );
+            session(['cart_id' => $cart->id]);
+        }
 
         if ($userId && !$cart->user_id) {
             $cart->update(['user_id' => $userId]);
