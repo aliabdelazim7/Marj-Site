@@ -35,7 +35,8 @@ class AdminProductController extends Controller {
             'sale_price' => 'nullable|integer|lt:price',
             'compare_at_price' => 'nullable|integer|gte:price',
             'sku' => 'nullable|string|max:80',
-            'image_url' => 'required|string|max:2000',
+            'image_url' => 'nullable|string|max:2000',
+            'image_file' => 'nullable|image|max:10240',
             'category' => 'required|string|max:80',
             'category_id' => 'nullable|exists:product_categories,id',
             'featured' => 'boolean',
@@ -44,6 +45,16 @@ class AdminProductController extends Controller {
             'status' => 'required|in:draft,active,archived',
         ]);
 
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('products', 'public');
+            $data['image_url'] = '/storage/' . $path;
+        }
+
+        if (empty($data['image_url'])) {
+            $data['image_url'] = '/manus-storage/signal-red-front_ea8ae7ae.jpg';
+        }
+
+        unset($data['image_file']);
         $product = CatalogProduct::create($data);
 
         // إنشاء الـ Variants الافتراضية (S, M, L, XL)
@@ -119,20 +130,35 @@ class AdminProductController extends Controller {
 
     public function addMedia(Request $request, int $productId) {
         $request->validate([
-            'url' => 'required|string|max:2000',
+            'file' => 'nullable|file|max:51200', // حتى 50 ميجابايت للـ 3D والصور
+            'url' => 'nullable|string|max:2000',
             'media_type' => 'required|in:front,back,gallery,model3d',
             'alt_text' => 'nullable|string|max:180',
         ]);
 
+        $url = $request->url;
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $extension = strtolower($file->getClientOriginalExtension());
+            $folder = in_array($extension, ['glb', 'gltf']) ? 'models' : 'products';
+            $path = $file->store($folder, 'public');
+            $url = '/storage/' . $path;
+        }
+
+        if (!$url) {
+            return back()->with('error', 'يرجى رفع ملف أو كتابة رابط صحيح.');
+        }
+
         ProductMedia::create([
             'product_id' => $productId,
-            'url' => $request->url,
+            'url' => $url,
             'media_type' => $request->media_type,
             'alt_text' => $request->alt_text,
             'sort_order' => 0,
         ]);
 
-        return back()->with('success', 'تمت إضافة الوسيط/الصورة بنجاح!');
+        return back()->with('success', 'تمت إضافة وسيط المنتج بنجاح!');
     }
 
     public function deleteMedia(int $mediaId) {

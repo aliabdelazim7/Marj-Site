@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto">
-    <form action="{{ route('admin.products.store') }}" method="POST" class="glass-sidebar rounded-3xl p-6 sm:p-8 border border-white/5 space-y-6">
+    <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="glass-sidebar rounded-3xl p-6 sm:p-8 border border-white/5 space-y-6">
         @csrf
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -39,9 +39,15 @@
                 <input type="number" name="compare_at_price" min="1" value="{{ old('compare_at_price') }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-sm text-white focus:outline-none focus:border-cyan-500">
             </div>
 
-            <div class="sm:col-span-2">
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">رابط صورة المنتج الأساسية *</label>
-                <input type="text" name="image_url" required value="{{ old('image_url') }}" placeholder="/images/signal-red-front.jpg" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-sm text-white focus:outline-none focus:border-cyan-500">
+            <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-900/60 border border-white/5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">رفع صورة أساسية من الجهاز</label>
+                    <input type="file" name="image_file" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-cyan-500/20 file:text-cyan-300">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">أو رابط صورة المنتج (URL)</label>
+                    <input type="text" name="image_url" value="{{ old('image_url') }}" placeholder="/manus-storage/signal-red-front_ea8ae7ae.jpg" class="w-full px-4 py-2 rounded-xl bg-slate-950 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-500">
+                </div>
             </div>
 
             <div class="sm:col-span-2">
