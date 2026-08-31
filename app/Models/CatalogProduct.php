@@ -54,6 +54,10 @@ class CatalogProduct extends Model {
         return $this->belongsTo(ProductCategory::class, 'category_id');
     }
 
+    public function getNameArabicAttribute(): string {
+        return $this->attributes['name_arabic'] ?? $this->attributes['name'] ?? '';
+    }
+
     public function getEffectivePriceAttribute(): int {
         return $this->sale_price ?? $this->price;
     }

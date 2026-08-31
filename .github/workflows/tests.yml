@@ -22,7 +22,7 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: ${{ matrix.php-version }}
-        extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_sqlite, bcmath, curl
+        extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_sqlite, sqlite3, bcmath, curl
         coverage: none
 
     - name: Copy Environment File
@@ -35,4 +35,4 @@ jobs:
       run: php artisan key:generate
 
     - name: Execute Automated Tests (Unit & Feature)
-      run: vendor/bin/phpunit
+      run: php artisan test

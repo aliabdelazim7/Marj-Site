@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Cart;
 use App\Models\StoreSetting;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -15,19 +16,33 @@ class AppServiceProvider extends ServiceProvider {
     public function boot(): void {
         // مشاركة إعدادات المتجر والسلة مع جميع قوالب Blade
         View::composer('*', function ($view) {
-            $sessionKey = session()->getId();
+            $storeSettings = null;
             $cart = null;
+            $cartCount = 0;
 
-            if ($sessionKey) {
-                $cart = Cart::where('session_key', $sessionKey)
-                    ->with('items.variant.product')
-                    ->first();
+            try {
+                if (Schema::hasTable('store_settings')) {
+                    $storeSettings = StoreSetting::current();
+                }
+                $sessionKey = session()->getId();
+                if ($sessionKey && Schema::hasTable('carts')) {
+                    $cart = Cart::where('session_key', $sessionKey)
+                        ->with('items.variant.product')
+                        ->first();
+                    $cartCount = $cart?->items_count ?? 0;
+                }
+            } catch (\Throwable) {
+                // Ignore if DB not ready during early bootstrap/tests
             }
 
             $view->with([
-                'storeSettings' => StoreSetting::current(),
+                'storeSettings' => $storeSettings ?? new StoreSetting([
+                    'brand_name' => 'مرج',
+                    'shipping_fee' => 50,
+                    'free_shipping_threshold' => 2000,
+                ]),
                 'globalCart' => $cart,
-                'cartItemsCount' => $cart?->items_count ?? 0,
+                'cartItemsCount' => $cartCount,
             ]);
         });
     }

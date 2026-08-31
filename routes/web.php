@@ -59,6 +59,11 @@ Route::post('/try-on/generate', [TryOnController::class, 'generate'])->name('try
 // تقييمات المشترين الموثقين
 Route::post('/reviews/store', [ReviewController::class, 'store'])->name('reviews.store');
 
+// قبول دعوة الفريق
+Route::get('/team/accept/{token}', function ($token) {
+    return redirect()->route('login')->with('info', 'يرجى تسجيل الدخول أو إنشاء حساب جديد لتفعيل صلاحية الفريق.');
+})->name('team.accept-invite');
+
 // المصادقة والحساب
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
