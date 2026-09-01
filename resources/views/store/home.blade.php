@@ -42,6 +42,9 @@
         };
         reader.readAsDataURL(file);
     },
+    hoodieScale: 0.72,
+    hoodieOffsetY: 0,
+    hoodieOffsetX: 0,
     clearPhoto() {
         this.photoDataUrl = null;
         this.photoName = '';
@@ -64,42 +67,55 @@
                     canvas.width = width;
                     canvas.height = height;
                     
-                    // 1. Draw the user's full original photo (keeps face, head, and background)
+                    // 1. Draw the user's full original photo (keeps face, head, and background intact)
                     ctx.drawImage(userImg, 0, 0, width, height);
                     
-                    // 2. Position the hoodie naturally over upper torso
-                    const hWidth = width * 0.78;
+                    // 2. Position the transparent hoodie cutout naturally over the torso
+                    const scale = this.hoodieScale || 0.72;
+                    const hWidth = width * scale;
                     const hHeight = hWidth * (hoodieImg.naturalHeight / hoodieImg.naturalWidth);
-                    const hX = (width - hWidth) / 2;
-                    const hY = height * 0.32;
+                    const hX = ((width - hWidth) / 2) + (this.hoodieOffsetX || 0);
+                    const hY = (height * 0.28) + (this.hoodieOffsetY || 0);
                     
                     // 3. Drop shadow & blending for realistic depth
                     ctx.save();
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-                    ctx.shadowBlur = 22;
-                    ctx.shadowOffsetY = 12;
+                    ctx.shadowBlur = Math.round(width * 0.025);
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = Math.round(height * 0.015);
                     
+                    // Draw transparent garment
                     ctx.drawImage(hoodieImg, hX, hY, hWidth, hHeight);
                     ctx.restore();
                     
                     // 4. Signature preview badge
                     ctx.save();
                     ctx.fillStyle = 'rgba(11, 123, 142, 0.92)';
-                    ctx.fillRect(width - 160, height - 42, 150, 32);
+                    const badgeW = Math.max(140, width * 0.18);
+                    const badgeH = Math.max(28, height * 0.035);
+                    ctx.fillRect(width - badgeW - 16, height - badgeH - 16, badgeW, badgeH);
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 12px sans-serif';
+                    ctx.font = `bold ${Math.round(badgeH * 0.42)}px 'IBM Plex Sans Arabic', sans-serif`;
                     ctx.textAlign = 'center';
-                    ctx.fillText('MARJ VIRTUAL TRY-ON', width - 85, height - 22);
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('MARJ VIRTUAL TRY-ON', width - (badgeW / 2) - 16, height - (badgeH / 2) - 16);
                     ctx.restore();
                     
-                    resolve(canvas.toDataURL('image/jpeg', 0.92));
+                    resolve(canvas.toDataURL('image/jpeg', 0.95));
                 };
                 hoodieImg.onerror = () => resolve(userPhotoUrl);
-                hoodieImg.src = hoodiePhotoUrl;
+                // Load the transparent cutout
+                const cutoutSrc = hoodiePhotoUrl.includes('-cutout') ? hoodiePhotoUrl : hoodiePhotoUrl.replace('.png', '-cutout.png');
+                hoodieImg.src = cutoutSrc;
             };
             userImg.onerror = () => resolve(hoodiePhotoUrl);
             userImg.src = userPhotoUrl;
         });
+    },
+    async recomputeComposite() {
+        if (this.photoDataUrl && this.selectedProduct) {
+            this.resultUrl = await this.generateTryOnComposite(this.photoDataUrl, this.selectedProduct.image_url);
+        }
     },
     async runTryOn() {
         if (!this.photoDataUrl) {
@@ -375,10 +391,29 @@
                     </div>
 
                     <template x-if="status === 'success' && resultUrl">
-                        <a class="download-link" :href="resultUrl" :download="'marj-' + selectedProduct.slug + '.jpg'">
-                            <i data-lucide="download" class="w-4 h-4"></i>
-                            نزّل النتيجة
-                        </a>
+                        <div class="mt-3 flex flex-col gap-2">
+                            <div class="p-3 bg-[#071d26] border border-[#123a46] rounded flex flex-col gap-2">
+                                <div class="flex items-center justify-between text-xs text-[#a0c4cc]">
+                                    <span>⚙️ ضبط المقاس والارتفاع</span>
+                                    <button type="button" @click="hoodieScale = 0.72; hoodieOffsetY = 0; hoodieOffsetX = 0; recomputeComposite()" class="text-xs text-[#0b7b8e] hover:underline">إعادة ضبط</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                        <label class="block text-[11px] text-slate-300 mb-1">حجم الهودي</label>
+                                        <input type="range" min="0.50" max="0.95" step="0.02" x-model.number="hoodieScale" @input="recomputeComposite()" class="w-full accent-[#0b7b8e]">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] text-slate-300 mb-1">محاذاة العنق/الصدر</label>
+                                        <input type="range" min="-80" max="80" step="4" x-model.number="hoodieOffsetY" @input="recomputeComposite()" class="w-full accent-[#0b7b8e]">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a class="download-link" :href="resultUrl" :download="'marj-' + selectedProduct.slug + '.jpg'">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                نزّل النتيجة
+                            </a>
+                        </div>
                     </template>
 
                     <template x-if="status !== 'success' || !resultUrl">
