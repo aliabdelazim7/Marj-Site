@@ -4,8 +4,8 @@
 
 @section('content')
 <div x-data="{
-    products: {{ Js::from($featuredProducts) }},
-    selectedProduct: {{ Js::from($featuredProducts->first()) }},
+    products: {{ Js::from($featuredProducts ?? []) }},
+    selectedProduct: {{ Js::from($featuredProducts->first() ?? (object)['id' => 1, 'name' => 'Signal Red', 'name_arabic' => 'إشارة حمراء', 'price' => 899, 'image_url' => '/manus-storage/signal-red-front_ea8ae7ae.jpg', 'slug' => 'signal-red-hoodie']) }},
     photoDataUrl: null,
     photoName: '',
     consent: true,

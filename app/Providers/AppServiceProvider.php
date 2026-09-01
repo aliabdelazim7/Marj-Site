@@ -41,6 +41,7 @@ class AppServiceProvider extends ServiceProvider {
                     'shipping_fee' => 50,
                     'free_shipping_threshold' => 2000,
                 ]),
+                'cart' => $cart,
                 'globalCart' => $cart,
                 'cartItemsCount' => $cartCount,
             ]);
