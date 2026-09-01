@@ -8,6 +8,12 @@
 
 > **الخلاصة في سطر واحد:** مرج هو independent Arabic-first hoodie e-commerce application يشبه WooCommerce في تجربة التشغيل، لكنه مبني بـReact/Vite وExpress/tRPC وDrizzle/MySQL، ويحتوي على catalog وproduct variations وcart وcheckout وorders وadmin dashboard وfree Virtual Try-On وGrowth suite، مع إبقاء card payments وWhatsApp Business API خارج النطاق عمدًا.
 
+### ملاحظة عن بنية الريبو النهائية
+
+الريبو canonical يحتوي على مسارين يجب الفصل بينهما أثناء العمل. المسار الأساسي الأصلي هو React/Vite + Express/tRPC ويستخدم `client/` و`server/` و`shared/` و`drizzle/`، وهو المسار المرتبط بنسخة Manus WebDev. يوجد أيضًا Laravel/PHP adaptation للنشر المستقل على Hostinger، ويستخدم `app/` و`routes/` و`resources/views/` و`database/` و`public/` و`config/`، مع أدلة تشغيل Hostinger واختبارات PHPUnit.
+
+قبل أي تعديل، يجب تحديد runtime المستهدف. لا تخلط tRPC routes مع Laravel routes أو Drizzle migrations مع Laravel migrations. لإعادة إنتاج نسخة Manus ابدأ من React/Express. لتشغيل نسخة Hostinger اقرأ `docs/HOSTINGER_DEPLOYMENT_GUIDE.md` و`docs/HOSTINGER_LARAVEL_SETUP.md`، وجهز environment وdatabase الخاصة بـPHP خارج Git. لا تعتبر وجود المسارين دليلًا على أنهما deployed معًا.
+
 ---
 
 ## 1. هدف المشروع من البداية
