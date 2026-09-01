@@ -132,6 +132,24 @@ class CatalogProductsSeeder extends Seeder {
                     ]
                 );
             }
+
+            // Seed media assets (Front, Back/Side, and 3D Model)
+            $sidePhoto = str_replace('-front_', '-side_', $item['image_url']);
+            
+            \App\Models\ProductMedia::updateOrCreate(
+                ['product_id' => $product->id, 'media_type' => 'front'],
+                ['url' => $item['image_url'], 'alt_text' => "الواجهة الأمامية لهودي {$product->name_arabic}", 'sort_order' => 1]
+            );
+
+            \App\Models\ProductMedia::updateOrCreate(
+                ['product_id' => $product->id, 'media_type' => 'back'],
+                ['url' => $sidePhoto, 'alt_text' => "الجهة الخلفية لهودي {$product->name_arabic}", 'sort_order' => 2]
+            );
+
+            \App\Models\ProductMedia::updateOrCreate(
+                ['product_id' => $product->id, 'media_type' => 'model3d'],
+                ['url' => '/models/hoodie.glb', 'alt_text' => "مجسم 3D لهودي {$product->name_arabic}", 'sort_order' => 3]
+            );
         }
     }
 }

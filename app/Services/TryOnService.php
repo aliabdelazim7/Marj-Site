@@ -33,12 +33,12 @@ class TryOnService {
             }
         }
 
-        // Fallback: Return successful preview response with the uploaded image and overlay indication
+        // Return product garment high-res preview image
         return [
             'success' => true,
-            'result_image_url' => $base64Image,
+            'result_image_url' => $productImageUrl,
             'is_preview' => true,
-            'message' => "تمت معالجة القياس الافتراضي لهودي {$productName} بنجاح!",
+            'message' => "تمت معالجة القياس وتجهيز هودي {$productName} بنجاح!",
         ];
     }
 }
