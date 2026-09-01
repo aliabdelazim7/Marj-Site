@@ -32,6 +32,7 @@ class TryOnService {
             "Do not add text, logos, extra people, accessories, or alter the person's face.",
         ]);
 
+        // 1. Check Manus Forge Provider
         if (!empty($forgeUrl) && !empty($forgeKey)) {
             try {
                 $baseUrl = rtrim($forgeUrl, '/') . '/';
@@ -42,7 +43,7 @@ class TryOnService {
                     'Content-Type' => 'application/json',
                     'Connect-Protocol-Version' => '1',
                     'Authorization' => "Bearer {$forgeKey}",
-                ])->timeout(60)->post($endpoint, [
+                ])->timeout(90)->post($endpoint, [
                     'prompt' => $prompt,
                     'original_images' => [
                         [
@@ -81,12 +82,78 @@ class TryOnService {
             }
         }
 
-        // Return product garment high-res preview image
+        // 2. Check Replicate IDM-VTON Provider
+        $replicateToken = env('REPLICATE_API_TOKEN');
+        if (!empty($replicateToken)) {
+            try {
+                $fullGarmentUrl = Str::startsWith($productImageUrl, 'http') ? $productImageUrl : url($productImageUrl);
+                $fullUserPhoto = "data:{$mimeType};base64,{$encoded}";
+
+                $response = Http::withHeaders([
+                    'Authorization' => "Bearer {$replicateToken}",
+                    'Content-Type' => 'application/json',
+                    'Prefer' => 'wait',
+                ])->timeout(90)->post('https://api.replicate.com/v1/predictions', [
+                    'version' => 'c871bb9b046607b680449ecbae55fd8e6d945e0a1948644bf236166fb763e826',
+                    'input' => [
+                        'human_img' => $fullUserPhoto,
+                        'garm_img' => $fullGarmentUrl,
+                        'garment_des' => $productName . ' ' . $productColor . ' ' . $productDescription,
+                        'category' => 'upper_body',
+                    ]
+                ]);
+
+                if ($response->successful()) {
+                    $prediction = $response->json();
+                    $outputUrl = is_array($prediction['output'] ?? null) ? $prediction['output'][0] : ($prediction['output'] ?? null);
+                    if ($outputUrl) {
+                        return [
+                            'success' => true,
+                            'result_image_url' => $outputUrl,
+                            'product_name' => $productName,
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("[TryOnService] Replicate API exception: " . $e->getMessage());
+            }
+        }
+
+        // 3. Check Fal.ai IDM-VTON Provider
+        $falKey = env('FAL_KEY');
+        if (!empty($falKey)) {
+            try {
+                $fullGarmentUrl = Str::startsWith($productImageUrl, 'http') ? $productImageUrl : url($productImageUrl);
+                $response = Http::withHeaders([
+                    'Authorization' => "Key {$falKey}",
+                    'Content-Type' => 'application/json',
+                ])->timeout(90)->post('https://fal.run/fal-ai/idm-vton', [
+                    'human_image_url' => "data:{$mimeType};base64,{$encoded}",
+                    'garment_image_url' => $fullGarmentUrl,
+                    'description' => $productName,
+                ]);
+
+                if ($response->successful()) {
+                    $falData = $response->json();
+                    if (!empty($falData['image']['url'])) {
+                        return [
+                            'success' => true,
+                            'result_image_url' => $falData['image']['url'],
+                            'product_name' => $productName,
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("[TryOnService] Fal API exception: " . $e->getMessage());
+            }
+        }
+
+        // Fallback when no AI provider is configured
         return [
             'success' => true,
             'result_image_url' => $productImageUrl,
             'is_preview' => true,
-            'message' => "تمت معالجة القياس وتجهيز هودي {$productName} بنجاح!",
+            'message' => "تم تجهيز المعاينة لهودي {$productName} بنجاح!",
         ];
     }
 }
