@@ -1,42 +1,47 @@
 @extends('layouts.app')
 
-@section('title', 'الشحن والسياسات — ' . ($storeSettings->brand_name ?? 'مرج'))
+@section('title', 'الشحن والاستبدال — مرج')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-8">
-    <div class="text-center">
-        <h1 class="text-3xl sm:text-4xl font-black text-white">السياسات والشحن</h1>
-        <p class="text-sm text-slate-400 mt-1">كل ما تحتاج معرفته عن التوصيل، الاستبدال، وطرق الدفع.</p>
-    </div>
-
-    <!-- سياسة الشحن -->
-    <div class="glass-panel p-6 sm:p-8 rounded-3xl space-y-3">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <i data-lucide="truck" class="w-5 h-5 text-cyan-400"></i>
-            الشحن والتوصيل
-        </h3>
-        <p class="text-sm text-slate-300 leading-relaxed">{{ $settings->shipping_notice }}</p>
-        <div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300">
-            🌊 {{ $settings->shipping_scope }}
+<div class="container policy-page py-16">
+    <header class="commerce-heading">
+        <div>
+            <p class="kicker"><span class="red-block"></span> مرج / المعلومات المهمة</p>
+            <h1>الشحن<br><em>والاستبدال.</em></h1>
         </div>
-    </div>
+        <p class="section-aside">نوضح لك طريقة وصول طلبك وما تحتاج معرفته قبل الإتمام.</p>
+    </header>
 
-    <!-- سياسة الاسترجاع والاستبدال -->
-    <div class="glass-panel p-6 sm:p-8 rounded-3xl space-y-3">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <i data-lucide="rotate-ccw" class="w-5 h-5 text-teal-400"></i>
-            الاستبدال والاسترجاع
-        </h3>
-        <p class="text-sm text-slate-300 leading-relaxed">{{ $settings->return_policy }}</p>
-    </div>
+    <section class="policy-grid grid grid-cols-1 md:grid-cols-3 gap-6">
+        <article class="policy-card border-t border-[#111] pt-6 space-y-3">
+            <i data-lucide="truck" class="w-6 h-6 text-[#0b7b8e]"></i>
+            <p class="eyebrow">SHIPPING / مصر</p>
+            <h2 class="text-xl font-bold text-[#111]">توصيل لكافة المحافظات</h2>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                شحن سريع خلال 2-4 أيام عمل لجميع محافظات جمهورية مصر العربية مع معاينة الشحنة عند الاستلام.
+            </p>
+            <strong class="block text-xs text-[#0b7b8e] font-bold">
+                الشحن مجاني للطلبات فوق {{ $storeSettings->free_shipping_threshold ?? 2000 }} ج.م.
+            </strong>
+        </article>
 
-    <!-- سياسة الدفع -->
-    <div class="glass-panel p-6 sm:p-8 rounded-3xl space-y-3">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i>
-            طرق الدفع والأمان
-        </h3>
-        <p class="text-sm text-slate-300 leading-relaxed">{{ $settings->payment_notice }}</p>
-    </div>
+        <article class="policy-card border-t border-[#111] pt-6 space-y-3">
+            <i data-lucide="rotate-ccw" class="w-6 h-6 text-[#0b7b8e]"></i>
+            <p class="eyebrow">RETURNS & EXCHANGES</p>
+            <h2 class="text-xl font-bold text-[#111]">الاستبدال والإرجاع</h2>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                استبدال واسترجاع مجاني خلال 14 يوماً من تاريخ استلام الشحنة، بشرط أن تكون القطعة بحالتها الأصلية غير مغسولة وببطاقتها.
+            </p>
+        </article>
+
+        <article class="policy-card border-t border-[#111] pt-6 space-y-3">
+            <i data-lucide="credit-card" class="w-6 h-6 text-[#0b7b8e]"></i>
+            <p class="eyebrow">PAYMENT</p>
+            <h2 class="text-xl font-bold text-[#111]">طرق الدفع</h2>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                الدفع نقدًا عند الاستلام (COD)، أو التحويل الفوري عبر إنستاباي (InstaPay) والمحافظ الإلكترونية (فودافون كاش وغيرها).
+            </p>
+        </article>
+    </section>
 </div>
 @endsection

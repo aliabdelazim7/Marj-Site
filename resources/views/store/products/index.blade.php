@@ -1,33 +1,38 @@
 @extends('layouts.app')
 
-@section('title', 'جميع الهوديز — ' . ($storeSettings->brand_name ?? 'مرج'))
+@section('title', 'جميع الهوديز — مرج')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-    <!-- عنوان الصفحة -->
-    <div class="mb-8">
-        <h1 class="text-3xl sm:text-4xl font-black text-white">تشكيلة الهوديز</h1>
-        <p class="text-slate-400 text-sm mt-1">استكشف جميع الهوديز المصنوعة من القطن الثقيل بألوان وقصات عصرية.</p>
+<div class="container collection" style="padding-top: 3rem;">
+    <!-- رأس الصفحة -->
+    <div class="section-heading">
+        <div>
+            <p class="kicker">01 / الكتالوج</p>
+            <h2>جميع الهوديز.</h2>
+        </div>
+        <div class="collection-heading-actions">
+            <p class="section-aside">قطن مصري ثقيل 100%<br>قصات مريحة وتفاصيل حادة.</p>
+        </div>
     </div>
 
-    <!-- الفلاتر والترتيب -->
-    <div class="glass-panel rounded-2xl p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
-        <!-- التصنيفات السريعة -->
-        <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('products.index') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ !request('size') && !request('category') ? 'bg-cyan-500 text-slate-950' : 'bg-white/5 text-slate-300 hover:bg-white/10' }}">
+    <!-- شريط الفلاتر والترتيب -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-6 mb-8 border-b border-[#111]">
+        <!-- فلاتر المقاس -->
+        <div class="flex items-center gap-2">
+            <a href="{{ route('products.index') }}" class="px-3 py-1.5 border text-xs font-bold transition {{ !request('size') ? 'bg-[#111] text-white border-[#111]' : 'border-[#aaa] text-[#111] hover:border-[#111]' }}">
                 الكل
             </a>
             @foreach(['S', 'M', 'L', 'XL'] as $sz)
-                <a href="{{ route('products.index', array_merge(request()->query(), ['size' => $sz])) }}" class="px-3 py-1.5 rounded-xl text-xs font-bold transition {{ request('size') === $sz ? 'bg-cyan-500 text-slate-950' : 'bg-white/5 text-slate-300 hover:bg-white/10' }}">
+                <a href="{{ route('products.index', array_merge(request()->query(), ['size' => $sz])) }}" class="px-3 py-1.5 border text-xs font-bold transition {{ request('size') === $sz ? 'bg-[#111] text-white border-[#111]' : 'border-[#aaa] text-[#111] hover:border-[#111]' }}">
                     مقاس {{ $sz }}
                 </a>
             @endforeach
         </div>
 
         <!-- البحث والترتيب -->
-        <form method="GET" action="{{ route('products.index') }}" class="flex items-center gap-2">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="ابحث باسم الموديل..." class="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500">
-            <select name="sort" onchange="this.form.submit()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-500">
+        <form method="GET" action="{{ route('products.index') }}" class="flex items-center gap-3">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="ابحث باسم الموديل..." class="px-3 py-1.5 border border-[#aaa] bg-white text-xs text-[#111] focus:border-[#0b7b8e] outline-none">
+            <select name="sort" onchange="this.form.submit()" class="px-3 py-1.5 border border-[#aaa] bg-white text-xs text-[#111] focus:border-[#0b7b8e] outline-none">
                 <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>الأحدث</option>
                 <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>السعر: الأقل للأعلى</option>
                 <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>السعر: الأعلى للأقل</option>
@@ -37,49 +42,57 @@
 
     <!-- شبكة المنتجات -->
     @if($products->isEmpty())
-        <div class="text-center py-20 glass-panel rounded-3xl">
-            <i data-lucide="package-open" class="w-12 h-12 mx-auto text-slate-500 mb-3"></i>
-            <h3 class="text-lg font-bold text-white">لا توجد منتجات مطابقة لخيارات البحث</h3>
-            <p class="text-xs text-slate-400 mt-1">جرب إزالة بعض الفلاتر لعرض المنتجات المتاحة.</p>
-            <a href="{{ route('products.index') }}" class="mt-4 inline-block px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs">إعادة ضبط الفلاتر</a>
+        <div class="empty-commerce">
+            <h2>لا توجد منتجات مطابقة لخيارات البحث</h2>
+            <p>جرب إزالة بعض الفلاتر لعرض المنتجات المتاحة.</p>
+            <a href="{{ route('products.index') }}" class="text-xs font-bold text-[#0b7b8e]">إعادة ضبط الفلاتر ↙</a>
         </div>
     @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            @foreach($products as $product)
-                <div class="group glass-panel rounded-3xl overflow-hidden hover:border-cyan-500/40 transition duration-300 flex flex-col">
-                    <a href="{{ route('products.show', $product->slug) }}" class="block relative aspect-square bg-slate-900 overflow-hidden">
-                        <img src="{{ $product->image_url }}" alt="{{ $product->nameArabic }}" class="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500">
-                        
-                        @if($product->compare_at_price && $product->compare_at_price > $product->effective_price)
-                            <span class="absolute top-3 right-3 px-2.5 py-1 rounded-xl bg-rose-500 text-white font-bold text-xs shadow-md">
-                                خصم {{ $product->discount_percentage }}%
-                            </span>
-                        @endif
-                    </a>
+        <div class="product-grid">
+            @foreach($products as $index => $product)
+                <article class="product-card">
+                    <div class="product-card-media">
+                        <span class="product-index">{{ sprintf('%02d', $index + 1) }}</span>
+                        <a href="{{ route('products.show', $product->slug) }}" class="product-image-link">
+                            <img src="{{ $product->image_url }}" alt="هودي {{ $product->nameArabic }}" loading="lazy">
+                        </a>
+                        <span class="product-dot {{ match($index % 4) { 0 => 'red', 1 => 'white', 2 => 'black', default => 'grey' } }}"></span>
 
-                    <div class="p-5 flex-1 flex flex-col justify-between">
-                        <div>
-                            <div class="text-xs text-cyan-400 font-semibold mb-1">{{ $product->category }}</div>
-                            <a href="{{ route('products.show', $product->slug) }}" class="block font-bold text-base text-white hover:text-cyan-400 transition">
-                                {{ $product->nameArabic }}
-                            </a>
-                            <div class="text-xs text-slate-400 mt-0.5">{{ $product->name }}</div>
-                        </div>
-
-                        <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-                            <div>
-                                <span class="text-lg font-black text-white">{{ $product->effective_price }} <span class="text-xs font-normal text-slate-400">ج.م</span></span>
-                                @if($product->compare_at_price)
-                                    <span class="text-xs text-slate-500 line-through mr-2">{{ $product->compare_at_price }} ج.م</span>
-                                @endif
-                            </div>
-
-                            <a href="{{ route('products.show', $product->slug) }}" class="p-2.5 rounded-xl bg-white/5 hover:bg-cyan-500 hover:text-slate-950 text-slate-300 transition">
-                                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                            </a>
-                        </div>
+                        <button class="favorite-button" 
+                                :class="{ 'is-favorite': isWishlisted('{{ $product->slug }}') }" 
+                                @click="toggleWishlist('{{ $product->slug }}')"
+                                aria-label="إضافة للمفضلة">
+                            <i data-lucide="heart" class="w-4 h-4" :fill="isWishlisted('{{ $product->slug }}') ? 'currentColor' : 'none'"></i>
+                        </button>
                     </div>
-                </div>
+
+                    <div class="product-card-info">
+                        <div>
+                            <p class="eyebrow">{{ $product->name }}</p>
+                            <h3><a href="{{ route('products.show', $product->slug) }}">{{ $product->nameArabic }}</a></h3>
+                        </div>
+                        <strong>{{ $product->effective_price }} ج.م</strong>
+                    </div>
+
+                    <p class="product-description">{{ $product->short_description ?? $product->description }}</p>
+
+                    <div class="card-actions">
+                        <form action="{{ route('cart.add') }}" method="POST" class="w-full">
+                            @csrf
+                            <input type="hidden" name="variant_id" value="{{ $product->variants->first()?->id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="card-buy-button w-full flex items-center justify-between px-3">
+                                <span>أضف للسلة</span>
+                                <span>↙</span>
+                            </button>
+                        </form>
+
+                        <a href="{{ route('home') }}?tryOn={{ $product->slug }}#try-on" class="card-try-button flex items-center justify-between px-3 border border-[#111] text-xs font-bold hover:bg-[#111] hover:text-white transition">
+                            <span>جرّبه عليك</span>
+                            <span>↗</span>
+                        </a>
+                    </div>
+                </article>
             @endforeach
         </div>
 

@@ -1,82 +1,116 @@
 @extends('layouts.app')
 
-@section('title', 'تتبع حالة الطلب — ' . ($storeSettings->brand_name ?? 'مرج'))
+@section('title', 'تتبع طلبك — مرج')
 
 @section('content')
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-black text-white">تتبع حالة طلبك</h1>
-        <p class="text-sm text-slate-400 mt-1">أدخل رقم الطلب والبريد الإلكتروني لمعرفة مكان وحالة شحنتك لحظة بلحظة.</p>
+<div class="container checkout-page" x-data="{
+    orderNumber: '',
+    email: '',
+    loading: false,
+    order: null,
+    error: '',
+    statusLabels: {
+        'pending': 'استلمنا الطلب',
+        'confirmed': 'أكدنا التفاصيل',
+        'processing': 'بنجهز طلبك',
+        'shipped': 'خرج للتوصيل',
+        'delivered': 'تم التسليم'
+    },
+    statuses: ['pending', 'confirmed', 'processing', 'shipped', 'delivered'],
+    async searchOrder() {
+        if (!this.orderNumber || !this.email) return;
+        this.loading = true;
+        this.error = '';
+        this.order = null;
+
+        try {
+            let res = await fetch('{{ route('track-order.search') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ order_number: this.orderNumber, email: this.email })
+            });
+
+            let data = await res.json();
+            this.loading = false;
+
+            if (data.success && data.order) {
+                this.order = data.order;
+            } else {
+                this.error = data.message || 'لم نتمكن من العثور على طلب بهذه البيانات. تأكد من رقم الطلب والبريد.';
+            }
+        } catch (e) {
+            this.loading = false;
+            this.error = 'حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى.';
+        }
+    }
+}">
+    <div class="commerce-heading">
+        <div>
+            <p class="kicker"><span class="red-block"></span> متابعة الطلب</p>
+            <h1>أين وصل<br><em>طلبك؟</em></h1>
+        </div>
+        <p class="section-aside">اكتب رقم الطلب والبريد المستخدم<br>عند إتمام الشراء.</p>
     </div>
 
-    <!-- نموذج البحث -->
-    <form method="GET" action="{{ route('track-order') }}" class="glass-panel p-6 rounded-3xl space-y-4 mb-8">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">رقم الطلب *</label>
-                <input type="text" name="order_number" required value="{{ request('order_number') }}" placeholder="مثال: MRJ-X92A1" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-sm text-white uppercase focus:outline-none focus:border-cyan-500">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">البريد الإلكتروني *</label>
-                <input type="email" name="email" required value="{{ request('email') }}" placeholder="البريد المستخدم عند الطلب" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-sm text-white focus:outline-none focus:border-cyan-500">
-            </div>
-        </div>
+    <div class="track-layout">
+        <!-- نموذج البحث -->
+        <form class="track-form" @submit.prevent="searchOrder">
+            <label>
+                <span>رقم الطلب</span>
+                <input required type="text" x-model="orderNumber" placeholder="MRJ-XXXXXXXX" class="uppercase">
+            </label>
+            <label>
+                <span>البريد الإلكتروني</span>
+                <input required type="email" x-model="email" placeholder="name@example.com">
+            </label>
+            <button type="submit" class="p-3.5 bg-[#0b7b8e] hover:bg-[#085a68] text-white font-bold text-xs flex items-center justify-between transition" :disabled="loading">
+                <span x-text="loading ? 'جاري البحث...' : 'ابحث عن الطلب'"></span>
+                <i data-lucide="search" class="w-4 h-4"></i>
+            </button>
 
-        <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-600 text-slate-950 font-bold text-sm">
-            استعلام عن الشحنة
-        </button>
-    </form>
+            <template x-if="error">
+                <div class="error-message" role="alert" x-text="error"></div>
+            </template>
+        </form>
 
-    <!-- نتائج التتبع -->
-    @if(isset($order) && $order)
-        <div class="glass-panel p-6 sm:p-8 rounded-3xl space-y-6">
-            <div class="flex items-center justify-between pb-4 border-b border-white/10">
-                <div>
-                    <span class="text-xs text-slate-400">طلب رقم:</span>
-                    <h3 class="text-xl font-black text-white">#{{ $order->order_number }}</h3>
+        <!-- نتيجة البحث ومخطط الشحنة -->
+        <template x-if="order">
+            <section class="track-result">
+                <div class="track-result-head">
+                    <div>
+                        <p class="eyebrow" x-text="order.order_number"></p>
+                        <h2 x-text="statusLabels[order.status] || order.status"></h2>
+                    </div>
+                    <strong x-text="order.total + ' ج.م'"></strong>
                 </div>
-                <span class="px-3.5 py-1.5 rounded-xl text-xs font-black border {{ $order->status_badge_class }}">
-                    {{ $order->status_arabic }}
-                </span>
-            </div>
 
-            <!-- خط سير وتطور الطلب Timeline -->
-            @php
-                $steps = [
-                    'pending' => 'قيد الانتظار',
-                    'confirmed' => 'تم التأكيد',
-                    'processing' => 'جاري التجهيز',
-                    'shipped' => 'تم الشحن مع المندوب',
-                    'delivered' => 'تم التسليم بنجاح',
-                ];
-                $statuses = array_keys($steps);
-                $currentIndex = array_search($order->status, $statuses);
-                if ($currentIndex === false && $order->status === 'cancelled') $currentIndex = -1;
-            @endphp
-
-            <div class="space-y-4">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-cyan-400">مراحل الشحن</h4>
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
-                    @foreach($steps as $key => $label)
-                        @php $stepIndex = array_search($key, $statuses); @endphp
-                        <div class="p-3 rounded-xl border transition {{ $stepIndex <= $currentIndex ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-300 font-bold' : 'bg-slate-900/40 border-white/5 text-slate-500' }}">
-                            <div class="mb-1">
-                                @if($stepIndex <= $currentIndex) ✓ @else {{ $stepIndex + 1 }} @endif
-                            </div>
-                            <span>{{ $label }}</span>
+                <div class="status-timeline">
+                    <template x-for="(st, idx) in statuses" :key="st">
+                        <div class="status-step" :class="{ 'done': statuses.indexOf(order.status) >= idx }">
+                            <span x-text="statuses.indexOf(order.status) >= idx ? '✓' : (idx + 1)"></span>
+                            <small x-text="statusLabels[st]"></small>
                         </div>
-                    @endforeach
+                    </template>
                 </div>
-            </div>
 
-            @if($order->shipment_carrier || $order->tracking_number)
-                <div class="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/20 text-xs space-y-1">
-                    @if($order->shipment_carrier) <div>شركة الشحن: <strong>{{ $order->shipment_carrier }}</strong></div> @endif
-                    @if($order->tracking_number) <div>رقم بوليصة الشحن: <strong>{{ $order->tracking_number }}</strong></div> @endif
-                    @if($order->tracking_url) <div><a href="{{ $order->tracking_url }}" target="_blank" class="text-cyan-400 underline font-bold">رابط تتبع بوليصة الشحن مباشرة ➔</a></div> @endif
+                <div class="track-items">
+                    <template x-for="item in (order.items || [])" :key="item.id">
+                        <div class="flex justify-between py-2 border-b border-[#eee]">
+                            <span x-text="item.product_name + ' · مقاس ' + item.size + ' × ' + item.quantity"></span>
+                            <strong x-text="item.line_total + ' ج.م'"></strong>
+                        </div>
+                    </template>
                 </div>
-            @endif
-        </div>
-    @endif
+
+                <p class="track-note mt-4 text-xs text-slate-500">
+                    الدفع عند الاستلام ويتم تأكيد موعد التوصيل معك هاتفياً قبل وصول المندوب.
+                </p>
+            </section>
+        </template>
+    </div>
 </div>
 @endsection

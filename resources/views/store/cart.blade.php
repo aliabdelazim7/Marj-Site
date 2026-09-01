@@ -1,101 +1,92 @@
 @extends('layouts.app')
 
-@section('title', 'سلة المشتريات — ' . ($storeSettings->brand_name ?? 'مرج'))
+@section('title', 'سلة المشتريات — مرج')
 
 @section('content')
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-    <h1 class="text-3xl font-black text-white mb-8">سلة المشتريات</h1>
+<div class="container commerce-page">
+    <div class="commerce-heading">
+        <div>
+            <p class="kicker"><span class="red-block"></span> السلة</p>
+            <h1>اختياراتك<br><em>جاهزة.</em></h1>
+        </div>
+        <p class="section-aside">راجع المقاس والكمية قبل إتمام الطلب.<br>الشحن متاح لجميع محافظات مصر.</p>
+    </div>
 
     @if(!$cart || $cart->items->isEmpty())
-        <div class="text-center py-20 glass-panel rounded-3xl space-y-4">
-            <div class="w-16 h-16 mx-auto rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
-                <i data-lucide="shopping-bag" class="w-8 h-8"></i>
-            </div>
-            <h3 class="text-xl font-bold text-white">سلة المشتريات فارغة حالياً</h3>
-            <p class="text-sm text-slate-400">تصفح تشكيلة الهوديز وأضف قطعك المفضلة إلى السلة.</p>
-            <a href="{{ route('products.index') }}" class="inline-block px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-600 text-slate-950 font-bold text-sm">
-                تصفح المنتجات
+        <div class="empty-commerce">
+            <i data-lucide="shopping-bag" class="w-12 h-12 text-[#555] mx-auto"></i>
+            <h2>السلة لسه فاضية</h2>
+            <p>اختار هودي من المجموعة، أو جرّبه عليك أولًا.</p>
+            <a href="{{ route('products.index') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-[#0b7b8e] text-white font-bold text-sm">
+                <span>استكشف المجموعة</span>
+                <span>↙</span>
             </a>
         </div>
     @else
-        <!-- شريط الشحن المجاني -->
-        @php
-            $threshold = $storeSettings->free_shipping_threshold ?? 2000;
-            $subtotal = $cart->subtotal;
-            $progress = min(100, ($subtotal / $threshold) * 100);
-            $remaining = max(0, $threshold - $subtotal);
-        @endphp
-
-        <div class="glass-panel p-4 rounded-2xl mb-8 space-y-2">
-            <div class="flex items-center justify-between text-xs sm:text-sm font-semibold">
-                @if($remaining <= 0)
-                    <span class="text-emerald-400 flex items-center gap-1.5"><i data-lucide="check-circle" class="w-4 h-4"></i> مبروك! حصلت على شحن مجاني لكافة محافظات مصر.</span>
-                @else
-                    <span class="text-slate-300">أضف منتجات بقيمة <strong class="text-cyan-400">{{ $remaining }} ج.م</strong> إضافية للحصول على <strong class="text-emerald-400">شحن مجاني</strong>!</span>
-                @endif
-                <span class="text-slate-400">{{ (int)$progress }}%</span>
-            </div>
-            <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-cyan-500 to-teal-400 transition-all duration-500" style="width: {{ $progress }}%"></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <!-- قائمة المنتجات بالسلة -->
-            <div class="lg:col-span-2 space-y-4">
+        <div class="cart-layout">
+            <section class="cart-lines">
                 @foreach($cart->items as $item)
-                    <div class="glass-panel p-4 sm:p-5 rounded-2xl flex items-center gap-4">
-                        <img src="{{ $item->variant?->product?->image_url }}" alt="{{ $item->variant?->product?->nameArabic }}" class="w-20 h-20 rounded-xl object-cover bg-slate-900 shrink-0">
-                        
-                        <div class="flex-1 min-w-0">
-                            <h4 class="font-bold text-sm text-white truncate">{{ $item->variant?->product?->nameArabic }}</h4>
-                            <div class="text-xs text-slate-400 mt-0.5">المقاس: <span class="font-bold text-cyan-400">{{ $item->variant?->size }}</span> | {{ $item->variant?->color }}</div>
-                            <div class="font-black text-sm text-white mt-2">{{ $item->unit_price }} ج.م</div>
+                    <article class="cart-line">
+                        <img src="{{ $item->variant?->product?->image_url }}" alt="{{ $item->variant?->product?->nameArabic }}">
+                        <div class="cart-line-copy">
+                            <p class="eyebrow">{{ $item->variant?->product?->name }}</p>
+                            <h2>{{ $item->variant?->product?->nameArabic }}</h2>
+                            <p>{{ $item->unit_price }} ج.م · المقاس {{ $item->variant?->size }}</p>
+                            <a href="{{ route('products.show', $item->variant?->product?->slug) }}">عرض المنتج</a>
                         </div>
-
-                        <!-- تعديل الكمية وحذف -->
-                        <div class="flex items-center gap-3">
-                            <form action="{{ route('cart.update', $item->id) }}" method="POST" class="flex items-center gap-2">
-                                @csrf
-                                <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="50" onchange="this.form.submit()" class="w-14 px-2 py-1 rounded-lg bg-slate-900 border border-white/10 text-xs text-white text-center font-bold">
-                            </form>
-
+                        <div class="cart-line-actions">
+                            <div class="quantity-control">
+                                <form action="{{ route('cart.update', $item->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    <input type="hidden" name="quantity" value="{{ max(1, $item->quantity - 1) }}">
+                                    <button type="submit" aria-label="تقليل الكمية">−</button>
+                                </form>
+                                <strong>{{ $item->quantity }}</strong>
+                                <form action="{{ route('cart.update', $item->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    <input type="hidden" name="quantity" value="{{ $item->quantity + 1 }}">
+                                    <button type="submit" aria-label="زيادة الكمية">+</button>
+                                </form>
+                            </div>
+                            <strong>{{ $item->total_price }} ج.م</strong>
                             <form action="{{ route('cart.remove', $item->id) }}" method="POST">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="p-2 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition" title="حذف من السلة">
+                                <button type="submit" class="icon-danger" aria-label="حذف">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </form>
                         </div>
-                    </div>
+                    </article>
                 @endforeach
-            </div>
+            </section>
 
-            <!-- ملخص السلة -->
-            <div class="glass-panel p-6 rounded-3xl space-y-6">
-                <h3 class="font-black text-lg text-white">ملخص الطلب</h3>
-
-                <div class="space-y-3 text-sm">
-                    <div class="flex justify-between text-slate-300">
-                        <span>المجموع الفرعي:</span>
-                        <span class="font-bold text-white">{{ $cart->subtotal }} ج.م</span>
-                    </div>
-                    <div class="flex justify-between text-slate-300">
-                        <span>مصاريف الشحن:</span>
-                        <span class="text-xs text-slate-400">تُحتسب في خطوة الدفع</span>
-                    </div>
+            <aside class="order-summary">
+                <p class="eyebrow">ملخص الطلب</p>
+                <div>
+                    <span>الإجمالي الفرعي</span>
+                    <strong>{{ $cart->subtotal }} ج.م</strong>
                 </div>
-
-                <div class="pt-4 border-t border-white/10 flex justify-between items-baseline font-black">
-                    <span class="text-base text-white">الإجمالي التقديري:</span>
-                    <span class="text-2xl text-cyan-400">{{ $cart->subtotal }} <span class="text-xs text-slate-400">ج.م</span></span>
+                <div>
+                    <span>الشحن</span>
+                    <strong>يُحدد حسب المحافظة</strong>
                 </div>
-
-                <a href="{{ route('checkout.index') }}" class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-600 text-slate-950 font-black text-center text-sm hover:shadow-lg hover:shadow-cyan-500/30 hover:scale-[1.02] transition block">
-                    الاستمرار إلى الدفع والشحن
+                <hr>
+                <div class="summary-total">
+                    <span>الإجمالي قبل الشحن</span>
+                    <strong>{{ $cart->subtotal }} ج.م</strong>
+                </div>
+                <a href="{{ route('checkout.index') }}" class="cart-checkout-cta flex flex-col p-4 bg-[#0b7b8e] hover:bg-[#085a68] text-white transition mt-4">
+                    <div class="flex items-center justify-between w-full font-bold text-base">
+                        <span>إتمام الطلب</span>
+                        <span>↙</span>
+                    </div>
+                    <small class="text-xs text-cyan-200 mt-0.5">اختر المحافظة وطريقة الدفع</small>
                 </a>
-            </div>
+                <p class="summary-note">
+                    يظهر رسم الشحن النهائي بعد اختيار المحافظة في صفحة الإتمام. شحن مجاني للطلبات فوق {{ $storeSettings->free_shipping_threshold ?? 2000 }} ج.م.
+                </p>
+            </aside>
         </div>
     @endif
 </div>

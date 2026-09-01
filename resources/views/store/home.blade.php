@@ -1,170 +1,365 @@
 @extends('layouts.app')
 
-@section('title', ($storeSettings->brand_name ?? 'مرج') . ' — متجر الهوديز وتجربة اللبس الافتراضية')
+@section('title', 'مرج — الهودي اللي عليك')
 
 @section('content')
-<!-- Hero Section البانر الرئيسي بتأثيرات البحر والموج -->
-<section class="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="text-center max-w-3xl mx-auto space-y-6">
-            <!-- شارة علوية -->
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-semibold animate-pulse">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                <span>المجموعة الشتوية الجديدة | قطن مصري ثقيل 100%</span>
-            </div>
+<div x-data="{
+    products: {{ Js::from($featuredProducts) }},
+    selectedProduct: {{ Js::from($featuredProducts->first()) }},
+    photoDataUrl: null,
+    photoName: '',
+    consent: true,
+    status: 'idle',
+    errorMessage: '',
+    resultUrl: null,
+    loadingStep: '',
+    selectTryOnGarment(product) {
+        this.selectedProduct = product;
+        this.resultUrl = null;
+        this.status = this.photoDataUrl ? 'ready' : 'idle';
+        document.getElementById('try-on')?.scrollIntoView({ behavior: 'smooth' });
+    },
+    handlePhotoSelect(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            this.errorMessage = 'ارفع صورة بصيغة JPG أو PNG أو WebP فقط.';
+            this.status = 'error';
+            return;
+        }
+        if (file.size > 6 * 1024 * 1024) {
+            this.errorMessage = 'حجم الصورة كبير. استخدم صورة أقل من 6MB للحصول على تجربة أسرع.';
+            this.status = 'error';
+            return;
+        }
+        this.photoName = file.name;
+        this.errorMessage = '';
+        let reader = new FileReader();
+        reader.onload = (event) => {
+            this.photoDataUrl = event.target.result;
+            this.status = 'ready';
+            this.resultUrl = null;
+        };
+        reader.readAsDataURL(file);
+    },
+    clearPhoto() {
+        this.photoDataUrl = null;
+        this.photoName = '';
+        this.status = 'idle';
+        this.resultUrl = null;
+    },
+    async runTryOn() {
+        if (!this.photoDataUrl) {
+            this.errorMessage = 'اختار صورة واضحة أولًا.';
+            this.status = 'error';
+            return;
+        }
+        if (!this.consent) {
+            this.errorMessage = 'لازم توافق على معالجة الصورة قبل البدء.';
+            this.status = 'error';
+            return;
+        }
+        this.status = 'loading';
+        this.errorMessage = '';
+        this.loadingStep = 'بنحلل زاوية الجسم والإضاءة...';
 
-            <!-- العنوان الرئيسي -->
-            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight">
-                هوديز بتفاصيل <span class="bg-gradient-to-r from-cyan-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">البحر والموج</span>
-            </h1>
+        try {
+            setTimeout(() => { this.loadingStep = 'بنركب هودي ' + this.selectedProduct.name_arabic + ' ومطابقة المقاس...'; }, 800);
 
-            <p class="text-slate-300 text-base sm:text-lg sm:leading-relaxed max-w-2xl mx-auto">
-                قصات واسعة مدروسة وأقمشة قطنية ثقيلة بملمس ناعم، مع تجربة قياس افتراضية بالذكاء الاصطناعي وعرض ثلاثي الأبعاد 3D.
-            </p>
+            let response = await fetch('{{ route('try-on.generate') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    product_id: this.selectedProduct.id,
+                    image_base64: this.photoDataUrl
+                })
+            });
 
-            <!-- أزرار الإجراء الرئيسي -->
-            <div class="flex flex-wrap items-center justify-center gap-4 pt-4">
-                <a href="{{ route('products.index') }}" class="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-600 text-slate-950 font-black text-base hover:shadow-lg hover:shadow-cyan-500/30 hover:scale-105 transition flex items-center gap-2">
-                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                    تسوق التشكيلة الآن
+            let data = await response.json();
+
+            setTimeout(() => {
+                if (data.success) {
+                    this.resultUrl = data.result_image_url || this.photoDataUrl;
+                    this.status = 'success';
+                } else {
+                    this.errorMessage = data.message || 'حصلت مشكلة مؤقتة أثناء التوليد. جرّب صورة ثانية.';
+                    this.status = 'error';
+                }
+                if (window.lucide) lucide.createIcons();
+            }, 1600);
+        } catch (err) {
+            this.status = 'error';
+            this.errorMessage = 'حصل خطأ في الاتصال، يرجى المحاولة مرة أخرى.';
+        }
+    }
+}">
+
+    <!-- البانر الرئيسي Hero Section -->
+    <section class="hero container">
+        <div class="hero-copy">
+            <p class="kicker"><span class="red-block"></span> ملابس يومية، بقرار واضح</p>
+            <h1>الهودي<br><em>اللي عليك.</em></h1>
+            <p class="hero-lede">اختار القطعة. ارفع صورتك. شوفها عليك قبل ما تطلبها — مجانًا، وبخطوات بسيطة.</p>
+            <div class="hero-actions">
+                <a class="hero-catalog-link" href="{{ route('products.index') }}">
+                    استكشف المنتجات <span class="inline-block transform -rotate-45">↓</span>
                 </a>
-                <a href="{{ route('lookbook') }}" class="px-8 py-3.5 rounded-2xl glass-panel text-white font-bold text-base hover:bg-white/10 hover:border-cyan-500/40 transition flex items-center gap-2">
-                    <i data-lucide="compass" class="w-5 h-5"></i>
-                    استعرض اللوك بوك
+                <a class="text-link" href="#try-on">
+                    ابدأ التجربة المجانية <span>↙</span>
                 </a>
             </div>
         </div>
-    </div>
-</section>
 
-<!-- مميزات المتجر السريعة Value Props -->
-<section class="border-y border-white/5 py-10 bg-slate-950/40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-        <div class="p-4 rounded-2xl glass-panel">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-3">
-                <i data-lucide="truck" class="w-5 h-5"></i>
+        <div class="hero-art" aria-label="عرض بصري لهودي مع تفاصيل المعاينة">
+            <span class="hero-coordinate">30° 02′ N / 31° 14′ E</span>
+            <div class="hero-red-square"></div>
+            <div class="hero-hoodie-wrap">
+                <img class="hero-product-photo" src="{{ $featuredProducts->skip(2)->first()?->image_url ?? $featuredProducts->first()?->image_url }}" alt="هودي مرج">
             </div>
-            <h4 class="font-bold text-sm text-white">توصيل لكافة المحافظات</h4>
-            <p class="text-xs text-slate-400 mt-1">شحن سريع خلال 2-4 أيام</p>
-        </div>
-
-        <div class="p-4 rounded-2xl glass-panel">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center mb-3">
-                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+            <div class="hero-caption">
+                <span>01</span>
+                <span>FORM / FUNCTION</span>
             </div>
-            <h4 class="font-bold text-sm text-white">استبدال واسترجاع 14 يوماً</h4>
-            <p class="text-xs text-slate-400 mt-1">معاينة الشحنة عند الاستلام</p>
         </div>
+    </section>
 
-        <div class="p-4 rounded-2xl glass-panel">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3">
-                <i data-lucide="box" class="w-5 h-5"></i>
+    <!-- قسم الفكرة والبيان Principles Section -->
+    <section class="principles container" id="story">
+        <div class="section-label">
+            <span>01</span>
+            <span>الفكرة</span>
+        </div>
+        <div class="principle-grid">
+            <h2>مش بنبيع شكل.<br><span>بنصمم اختيار.</span></h2>
+            <div class="principle-text">
+                <p>مرج مساحة لقطع يومية مستوحاة من البحر وحركة الموج. كل موديل له شخصية، وكل قرار شراء يبدأ من إنك تشوفه عليك فعلًا.</p>
+                <p class="micro-note">MADE FOR THE EVERYDAY / FROM THE SEA, IN EGYPT</p>
             </div>
-            <h4 class="font-bold text-sm text-white">عرض ثلاثي الأبعاد 3D</h4>
-            <p class="text-xs text-slate-400 mt-1">معاينة القطعة من كل زاوية</p>
         </div>
+    </section>
 
-        <div class="p-4 rounded-2xl glass-panel">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center mb-3">
-                <i data-lucide="sparkles" class="w-5 h-5"></i>
-            </div>
-            <h4 class="font-bold text-sm text-white">تجربة لبس افتراضية AI</h4>
-            <p class="text-xs text-slate-400 mt-1">قيس الهودي على صورتك فوراً</p>
-        </div>
-    </div>
-</section>
-
-<!-- قسم الهوديز المميزة Featured Products -->
-<section class="py-16 sm:py-24">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-end justify-between mb-12">
+    <!-- قسم المجموعة والكتالوج Collection Section -->
+    <section class="collection container" id="collection">
+        <div class="section-heading">
             <div>
-                <span class="text-xs font-bold uppercase tracking-widest text-cyan-400">التشكيلة المختارة</span>
-                <h2 class="text-2xl sm:text-4xl font-black text-white mt-1">الأكثر طلباً هذا الموسم</h2>
+                <p class="kicker">02 / المجموعة</p>
+                <h2>اختار سرايتك.</h2>
             </div>
-            <a href="{{ route('products.index') }}" class="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-cyan-400 hover:text-cyan-300 transition">
-                <span>عرض الكل</span>
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            </a>
+            <div class="collection-heading-actions">
+                <p class="section-aside">أربع قطع. ألوان واضحة.<br>ولا شيء زائد.</p>
+                <a class="view-all-link flex items-center gap-1.5" href="{{ route('products.index') }}">
+                    <span>عرض كل المنتجات</span>
+                    <span>↙</span>
+                </a>
+            </div>
         </div>
 
-        <!-- شبكة المنتجات -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            @foreach($featuredProducts as $product)
-                <div class="group glass-panel rounded-3xl overflow-hidden hover:border-cyan-500/40 transition duration-300 flex flex-col">
-                    <!-- الصورة -->
-                    <a href="{{ route('products.show', $product->slug) }}" class="block relative aspect-square bg-slate-900 overflow-hidden">
-                        <img src="{{ $product->image_url }}" alt="{{ $product->nameArabic }}" class="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500">
+        <!-- شبكة المنتجات الأربعة Product Grid -->
+        <div class="product-grid">
+            @foreach($featuredProducts as $index => $product)
+                <article class="product-card">
+                    <div class="product-card-media">
+                        <span class="product-index">{{ sprintf('%02d', $index + 1) }}</span>
+                        <a href="{{ route('products.show', $product->slug) }}" class="product-image-link">
+                            <img src="{{ $product->image_url }}" alt="هودي {{ $product->nameArabic }}" loading="eager">
+                        </a>
+                        <span class="product-dot {{ match($index) { 0 => 'red', 1 => 'white', 2 => 'black', default => 'grey' } }}"></span>
                         
-                        @if($product->compare_at_price && $product->compare_at_price > $product->effective_price)
-                            <span class="absolute top-3 right-3 px-2.5 py-1 rounded-xl bg-rose-500 text-white font-bold text-xs shadow-md">
-                                خصم {{ $product->discount_percentage }}%
-                            </span>
-                        @endif
+                        <button class="favorite-button" 
+                                :class="{ 'is-favorite': isWishlisted('{{ $product->slug }}') }" 
+                                @click="toggleWishlist('{{ $product->slug }}')"
+                                aria-label="إضافة للمفضلة">
+                            <i data-lucide="heart" class="w-4 h-4" :fill="isWishlisted('{{ $product->slug }}') ? 'currentColor' : 'none'"></i>
+                        </button>
+                    </div>
 
-                        <div class="absolute bottom-3 right-3 left-3 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-2">
-                            <span class="w-full py-2 rounded-xl bg-slate-950/80 backdrop-blur text-white text-xs font-bold text-center border border-white/10 hover:bg-cyan-500 hover:text-slate-950 transition">
-                                تفاصيل المنتج والمقاسات
-                            </span>
-                        </div>
-                    </a>
-
-                    <!-- بيانات المنتج -->
-                    <div class="p-5 flex-1 flex flex-col justify-between">
+                    <div class="product-card-info">
                         <div>
-                            <div class="text-xs text-cyan-400 font-semibold mb-1">{{ $product->category }}</div>
-                            <a href="{{ route('products.show', $product->slug) }}" class="block font-bold text-base text-white hover:text-cyan-400 transition">
-                                {{ $product->nameArabic }}
-                            </a>
-                            <div class="text-xs text-slate-400 mt-0.5">{{ $product->name }}</div>
+                            <p class="eyebrow">{{ $product->name }}</p>
+                            <h3><a href="{{ route('products.show', $product->slug) }}">{{ $product->nameArabic }}</a></h3>
                         </div>
+                        <strong>{{ $product->effective_price }} ج.م</strong>
+                    </div>
 
-                        <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-                            <div>
-                                <span class="text-lg font-black text-white">{{ $product->effective_price }} <span class="text-xs font-normal text-slate-400">ج.م</span></span>
-                                @if($product->compare_at_price)
-                                    <span class="text-xs text-slate-500 line-through mr-2">{{ $product->compare_at_price }} ج.م</span>
-                                @endif
+                    <p class="product-description">{{ $product->short_description ?? $product->description }}</p>
+
+                    <div class="card-actions">
+                        <form action="{{ route('cart.add') }}" method="POST" class="w-full">
+                            @csrf
+                            <input type="hidden" name="variant_id" value="{{ $product->variants->first()?->id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="card-buy-button w-full flex items-center justify-between px-3">
+                                <span>أضف للسلة</span>
+                                <span>↙</span>
+                            </button>
+                        </form>
+
+                        <button type="button" class="card-try-button flex items-center justify-between px-3" @click="selectTryOnGarment({{ Js::from($product) }})">
+                            <span>جرّبه عليك</span>
+                            <span>↗</span>
+                        </button>
+                    </div>
+                </article>
+            @endforeach
+        </div>
+    </section>
+
+    <!-- قسم الاستوديو والتجربة الافتراضية AI Try-On Section -->
+    <section class="try-on-section" id="try-on">
+        <div class="container">
+            <div class="try-on-header">
+                <div>
+                    <p class="kicker"><span class="red-block"></span> 03 / التجربة الافتراضية</p>
+                    <h2>شوفه عليك<br><em>قبل القرار.</em></h2>
+                </div>
+                <div class="try-on-intro">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-[#0b7b8e] shrink-0 mt-1"></i>
+                    <p>تجربة مجانية تساعدك تشوف القصة واللون على صورتك. بدون اشتراك، وبدون تعقيد.</p>
+                </div>
+            </div>
+
+            <div class="try-on-layout">
+                <!-- لوحة 1: صورتك -->
+                <div class="try-on-panel upload-panel">
+                    <div class="panel-top">
+                        <span>01</span>
+                        <span>صورتك</span>
+                    </div>
+
+                    <div class="dropzone" :class="{ 'has-photo': photoDataUrl }" @click="$refs.photoInput.click()">
+                        <template x-if="!photoDataUrl">
+                            <div class="flex flex-col items-center gap-2 cursor-pointer">
+                                <i data-lucide="upload" class="w-7 h-7 text-[#0b7b8e]"></i>
+                                <strong>ارفع صورة واضحة</strong>
+                                <span>من الأمام، إضاءة جيدة، JPG / PNG / WebP</span>
                             </div>
+                        </template>
 
-                            <a href="{{ route('products.show', $product->slug) }}" class="p-2.5 rounded-xl bg-white/5 hover:bg-cyan-500 hover:text-slate-950 text-slate-300 transition">
-                                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                            </a>
+                        <template x-if="photoDataUrl">
+                            <img :src="photoDataUrl" alt="صورتك المختارة للتجربة" class="w-full h-full object-cover">
+                        </template>
+
+                        <input x-ref="photoInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="handlePhotoSelect">
+                    </div>
+
+                    <div class="photo-meta">
+                        <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                        <span x-text="photoName || 'لم يتم اختيار صورة بعد'"></span>
+                        <template x-if="photoDataUrl">
+                            <button type="button" aria-label="حذف الصورة" @click.stop="clearPhoto()" class="text-white hover:text-rose-400">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </template>
+                    </div>
+
+                    <div class="privacy-note">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-[#e7e4dc] shrink-0"></i>
+                        <span><strong>خصوصيتك أولًا.</strong> تُرسل الصورة فقط لطلب إنشاء المعاينة ولا تُنشر في الكتالوج أو تُعرض لمستخدمين آخرين.</span>
+                    </div>
+                </div>
+
+                <!-- لوحة 2: الهودي المختار -->
+                <div class="try-on-panel garment-panel">
+                    <div class="panel-top">
+                        <span>02</span>
+                        <span>الهودي المختار</span>
+                    </div>
+
+                    <div class="selected-garment">
+                        <img class="selected-product-photo" :src="selectedProduct.image_url" :alt="'هودي ' + selectedProduct.name_arabic">
+                        <div class="selected-garment-copy">
+                            <p class="eyebrow" x-text="selectedProduct.name"></p>
+                            <h3 x-text="selectedProduct.name_arabic"></h3>
+                            <p><span x-text="selectedProduct.price"></span> ج.م · <span x-text="selectedProduct.color || 'قطن مصري'"></span></p>
                         </div>
                     </div>
+
+                    <label class="select-label" for="garment-select">غيّر القطعة</label>
+                    <select id="garment-select" :value="selectedProduct.id" @change="selectedProduct = products.find(p => p.id == $event.target.value)">
+                        <template x-for="p in products" :key="p.id">
+                            <option :value="p.id" x-text="p.name_arabic + ' — ' + p.price + ' ج.م'"></option>
+                        </template>
+                    </select>
                 </div>
-            @endforeach
-        </div>
-    </div>
-</section>
 
-<!-- قسم اللوك بوك Lookbook Teaser -->
-@if($lookbookEntries->isNotEmpty())
-<section class="py-16 border-t border-white/5 bg-slate-950/30">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-2xl mx-auto mb-12">
-            <span class="text-xs font-bold uppercase tracking-widest text-cyan-400">الإطلالات والتنسيقات</span>
-            <h2 class="text-2xl sm:text-4xl font-black text-white mt-1">لوكبـوك مـرج</h2>
-            <p class="text-sm text-slate-400 mt-2">استلهم تنسيق إطلالتك الشتوية مع قطع مرج في الشارع والبحر.</p>
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-            @foreach($lookbookEntries as $entry)
-                <div class="group relative aspect-[3/4] rounded-3xl overflow-hidden bg-slate-900 border border-white/5">
-                    <img src="{{ $entry->image_url }}" alt="{{ $entry->title_arabic }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent flex flex-col justify-end p-6">
-                        <h4 class="font-black text-white text-base sm:text-lg">{{ $entry->title_arabic }}</h4>
-                        @if($entry->product)
-                            <a href="{{ route('products.show', $entry->product->slug) }}" class="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition">
-                                <span>تسوق القطعة ({{ $entry->product->effective_price }} ج.م)</span>
-                                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-                            </a>
-                        @endif
+                <!-- لوحة 3: النتيجة -->
+                <div class="try-on-panel result-panel">
+                    <div class="panel-top">
+                        <span>03</span>
+                        <span>النتيجة</span>
                     </div>
+
+                    <div class="result-frame" :class="{ 'result-ready': status === 'success' && resultUrl }">
+                        <template x-if="status === 'success' && resultUrl">
+                            <div class="result-image-button w-full h-full">
+                                <img :src="resultUrl" :alt="'نتيجة تجربة ' + selectedProduct.name_arabic" class="w-full h-full object-contain">
+                            </div>
+                        </template>
+
+                        <template x-if="status === 'loading'">
+                            <div class="result-state">
+                                <div class="w-7 h-7 border-2 border-[#0b7b8e] border-t-transparent rounded-full animate-spin"></div>
+                                <strong class="text-white mt-2">بنجهّز المعاينة...</strong>
+                                <span class="text-xs text-slate-400" x-text="loadingStep"></span>
+                            </div>
+                        </template>
+
+                        <template x-if="status !== 'success' && status !== 'loading'">
+                            <div class="result-state">
+                                <span class="result-cross">＋</span>
+                                <strong>المعاينة هتظهر هنا</strong>
+                                <span>اختار صورة وابدأ</span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <template x-if="status === 'success' && resultUrl">
+                        <a class="download-link" :href="resultUrl" :download="'marj-' + selectedProduct.slug + '.jpg'">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            نزّل النتيجة
+                        </a>
+                    </template>
+
+                    <template x-if="status !== 'success' || !resultUrl">
+                        <div class="result-placeholder">PREVIEW / 03</div>
+                    </template>
                 </div>
-            @endforeach
+            </div>
+
+            <div class="try-on-footer">
+                <label class="consent-row">
+                    <input type="checkbox" x-model="consent">
+                    <span class="custom-check">✓</span>
+                    <span>أوافق على معالجة صورتي مؤقتًا لإنشاء المعاينة.</span>
+                </label>
+
+                <button type="button" class="generate-button px-6 py-3 font-bold text-sm flex items-center justify-center gap-2" @click="runTryOn" :disabled="status === 'loading'">
+                    <template x-if="status === 'loading'">
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            جاري الإنشاء
+                        </span>
+                    </template>
+                    <template x-if="status !== 'loading'">
+                        <span>ولّد المعاينة <span>↗</span></span>
+                    </template>
+                </button>
+            </div>
+
+            <template x-if="status === 'error' && errorMessage">
+                <div class="error-message" role="alert" x-text="errorMessage"></div>
+            </template>
+
+            <template x-if="status === 'success'">
+                <div class="success-message" role="status">
+                    تم إنشاء المعاينة بنجاح. يمكنك تنزيل الصورة أو إضافة الهودي مباشرة إلى السلة!
+                </div>
+            </template>
         </div>
-    </div>
-</section>
-@endif
+    </section>
+</div>
 @endsection
