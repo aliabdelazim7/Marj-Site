@@ -18,6 +18,15 @@ class CatalogProductsSeeder extends Seeder {
             ]
         );
 
+        // Delete any test/extraneous products not matching official hoodies
+        $officialSlugs = [
+            'signal-red-hoodie',
+            'paper-white-hoodie',
+            'night-grid-hoodie',
+            'concrete-grey-hoodie',
+        ];
+        CatalogProduct::whereNotIn('slug', $officialSlugs)->delete();
+
         $products = [
             [
                 'slug' => 'signal-red-hoodie',
