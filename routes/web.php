@@ -56,6 +56,9 @@ Route::get('/lookbook', [LookbookController::class, 'index'])->name('lookbook');
 // تجربة اللبس الافتراضية
 Route::post('/try-on/generate', [TryOnController::class, 'generate'])->name('try-on.generate');
 
+// الأوتو ديبلوي (Auto Deploy Webhook)
+Route::match(['get', 'post'], '/deploy-webhook', [\App\Http\Controllers\DeployWebhookController::class, 'deploy'])->name('deploy.webhook');
+
 // تقييمات المشترين الموثقين
 Route::post('/reviews/store', [ReviewController::class, 'store'])->name('reviews.store');
 

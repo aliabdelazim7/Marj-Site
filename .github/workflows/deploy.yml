@@ -1,0 +1,17 @@
+name: Auto Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Webhook Auto Deploy
+        run: |
+          echo "Triggering Deploy Webhook..."
+          curl -s -X POST "https://maraj.pixelmindeg.com/deploy-webhook?secret=marj_deploy_secret_2026" || true
