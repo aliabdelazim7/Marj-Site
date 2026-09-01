@@ -1,0 +1,29 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
+class UserFactory extends Factory {
+    protected $model = User::class;
+
+    public function definition(): array {
+        return [
+            'name' => fake('ar_EG')->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'password' => Hash::make('password123'),
+            'role' => 'user',
+            'login_method' => 'local',
+            'remember_token' => Str::random(10),
+        ];
+    }
+
+    public function admin(): static {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+        ]);
+    }
+}

@@ -93,23 +93,37 @@
   },
   "license": "MIT",
   "name": "hoodie-fit-store",
-  "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af",
+  "overrides": {
+    "tailwindcss": {
+      "nanoid": "3.3.7"
+    }
+  },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "esbuild"
+    ],
     "overrides": {
-      "tailwindcss>nanoid": "3.3.7"
+      "tailwindcss": {
+        "nanoid": "3.3.7"
+      }
     },
     "patchedDependencies": {
       "wouter@3.7.1": "patches/wouter@3.7.1.patch"
     }
   },
   "scripts": {
-    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "RAYON_NUM_THREADS=1 vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build:client": "RAYON_NUM_THREADS=1 vite build",
+    "build:server": "esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "check": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
-    "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
+    "dev": "tsx watch server/_core/index.ts",
     "format": "prettier --write .",
     "shopify:probe": "tsx scripts/shopify-probe.runner.ts",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "node dist/index.js",
     "test": "vitest run"
   },
   "type": "module",

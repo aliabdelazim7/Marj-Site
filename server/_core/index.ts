@@ -51,15 +51,22 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  const preferredPort = process.env.PORT;
+  let port: number | string = 3000;
 
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+  if (preferredPort && isNaN(Number(preferredPort))) {
+    // Unix socket pipe or Passenger socket
+    port = preferredPort;
+  } else {
+    const numericPort = parseInt(preferredPort || "3000", 10);
+    port = await findAvailablePort(numericPort);
+    if (port !== numericPort) {
+      console.log(`Port ${numericPort} is busy, using port ${port} instead`);
+    }
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  server.listen(port as any, () => {
+    console.log(`Server running on ${typeof port === "number" ? `http://localhost:${port}/` : port}`);
   });
 }
 

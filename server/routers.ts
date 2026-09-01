@@ -55,7 +55,7 @@ export const isDirectProductImageUrl = (value: string) => {
 };
 const productImageUrlSchema = z.string().trim().max(2000).refine(isDirectProductImageUrl, "الصورة الرئيسية يجب أن تكون رابط ملف صورة مباشرًا مثل JPG أو PNG أو WEBP، وليست صفحة متجر أو رابط 3D.");
 const mediaTypeSchema = z.enum(["front", "back", "gallery", "model3d"]);
-export const productAdminInputSchema = z.object({
+export const productAdminInputShape = z.object({
   slug: z.string().trim().min(2).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "استخدم slug إنجليزيًا بشرطات فقط"),
   name: z.string().trim().min(2).max(160),
   nameArabic: z.string().trim().min(2).max(160),
@@ -72,7 +72,8 @@ export const productAdminInputSchema = z.object({
   manageStock: z.boolean().default(true),
   stockStatus: stockStatusSchema.default("instock"),
   status: productStatusSchema.default("draft"),
-}).superRefine((value, ctx) => {
+});
+export const productAdminInputSchema = productAdminInputShape.superRefine((value, ctx) => {
   if (value.salePrice !== null && value.salePrice !== undefined && value.salePrice >= value.price) {
     ctx.addIssue({ code: "custom", path: ["salePrice"], message: "سعر التخفيض يجب أن يكون أقل من السعر الأساسي" });
   }
@@ -80,7 +81,22 @@ export const productAdminInputSchema = z.object({
     ctx.addIssue({ code: "custom", path: ["compareAtPrice"], message: "السعر قبل الخصم يجب ألا يقل عن السعر الأساسي" });
   }
 });
-export const productAdminUpdateSchema = productAdminInputSchema.partial();
+export const productAdminUpdateSchema = productAdminInputShape.partial().superRefine((value, ctx) => {
+  if (value.price !== undefined && value.salePrice !== null && value.salePrice !== undefined && value.salePrice >= value.price) {
+    ctx.addIssue({ code: "custom", path: ["salePrice"], message: "سعر التخفيض يجب أن يكون أقل من السعر الأساسي" });
+  }
+  if (value.price !== undefined && value.compareAtPrice !== null && value.compareAtPrice !== undefined && value.compareAtPrice < value.price) {
+    ctx.addIssue({ code: "custom", path: ["compareAtPrice"], message: "السعر قبل الخصم يجب ألا يقل عن السعر الأساسي" });
+  }
+});
+export const productAdminUpdateInputSchema = productAdminInputShape.partial().extend({ id: z.number().int().positive() }).superRefine((value, ctx) => {
+  if (value.price !== undefined && value.salePrice !== null && value.salePrice !== undefined && value.salePrice >= value.price) {
+    ctx.addIssue({ code: "custom", path: ["salePrice"], message: "سعر التخفيض يجب أن يكون أقل من السعر الأساسي" });
+  }
+  if (value.price !== undefined && value.compareAtPrice !== null && value.compareAtPrice !== undefined && value.compareAtPrice < value.price) {
+    ctx.addIssue({ code: "custom", path: ["compareAtPrice"], message: "السعر قبل الخصم يجب ألا يقل عن السعر الأساسي" });
+  }
+});
 export const variantAdminInputSchema = z.object({
   productId: z.number().int().positive(),
   sku: z.string().trim().min(1).max(80),
@@ -159,7 +175,24 @@ const teamRoleSchema = z.enum(["order_operator", "catalog_editor", "analytics_vi
 const inviteTokenSchema = z.string().trim().min(32).max(160);
 const inviteExpirySchema = z.union([z.literal(24), z.literal(72), z.literal(168), z.literal(720), z.literal("unlimited")]).default(168);
 const hashInviteToken = (token: string) => createHash("sha256").update(token).digest("hex");
-const couponInputSchema = z.object({ code: z.string().trim().min(3).max(80).regex(/^[A-Za-z0-9_-]+$/), type: z.enum(["percentage", "fixed"]), value: z.number().int().positive().max(1_000_000), minimumSubtotal: z.number().int().min(0).max(10_000_000).default(0), usageLimit: z.number().int().positive().max(1_000_000).nullable(), startsAt: z.coerce.date(), expiresAt: z.coerce.date().nullable(), enabled: z.boolean() }).superRefine((input, ctx) => { if (input.type === "percentage" && input.value > 100) ctx.addIssue({ code: "custom", path: ["value"], message: "نسبة الخصم لا تتجاوز 100%." }); if (input.expiresAt && input.expiresAt <= input.startsAt) ctx.addIssue({ code: "custom", path: ["expiresAt"], message: "تاريخ الانتهاء يجب أن يأتي بعد البداية." }); });
+const couponInputShape = z.object({
+  code: z.string().trim().min(3).max(80).regex(/^[A-Za-z0-9_-]+$/),
+  type: z.enum(["percentage", "fixed"]),
+  value: z.number().int().positive().max(1_000_000),
+  minimumSubtotal: z.number().int().min(0).max(10_000_000).default(0),
+  usageLimit: z.number().int().positive().max(1_000_000).nullable(),
+  startsAt: z.coerce.date(),
+  expiresAt: z.coerce.date().nullable(),
+  enabled: z.boolean(),
+});
+const couponInputSchema = couponInputShape.superRefine((input, ctx) => {
+  if (input.type === "percentage" && input.value > 100) ctx.addIssue({ code: "custom", path: ["value"], message: "نسبة الخصم لا تتجاوز 100%." });
+  if (input.expiresAt && input.expiresAt <= input.startsAt) ctx.addIssue({ code: "custom", path: ["expiresAt"], message: "تاريخ الانتهاء يجب أن يأتي بعد البداية." });
+});
+const couponUpdateInputSchema = couponInputShape.partial().extend({ id: z.number().int().positive() }).superRefine((input, ctx) => {
+  if (input.type === "percentage" && input.value !== undefined && input.value > 100) ctx.addIssue({ code: "custom", path: ["value"], message: "نسبة الخصم لا تتجاوز 100%." });
+  if (input.startsAt && input.expiresAt && input.expiresAt <= input.startsAt) ctx.addIssue({ code: "custom", path: ["expiresAt"], message: "تاريخ الانتهاء يجب أن يأتي بعد البداية." });
+});
 const fulfillmentInputSchema = z.object({ id: z.number().int().positive(), shipmentCarrier: z.string().trim().max(120).nullable(), trackingNumber: z.string().trim().max(160).nullable(), trackingUrl: z.string().trim().max(2000).url().nullable() });
 const inventoryAdjustmentInputSchema = z.object({ variantId: z.number().int().positive(), delta: z.number().int().min(-100_000).max(100_000).refine((value) => value !== 0), reason: z.string().trim().min(3).max(240) });
 const reviewInputSchema = z.object({ orderNumber: z.string().trim().min(6).max(32), email: customerEmailSchema, productId: z.number().int().positive(), rating: z.number().int().min(1).max(5), body: z.string().trim().min(12).max(2000) });
@@ -229,7 +262,7 @@ export const appRouter = router({
       list: catalogProcedure.query(() => getAdminCatalog()),
       get: catalogProcedure.input(positiveIdSchema).query(({ input }) => getAdminProduct(input.id)),
       create: catalogProcedure.input(productAdminInputSchema).mutation(({ input }) => createCatalogProduct(input)),
-      update: catalogProcedure.input(productAdminUpdateSchema.extend({ id: z.number().int().positive() })).mutation(({ input }) => {
+      update: catalogProcedure.input(productAdminUpdateInputSchema).mutation(({ input }) => {
         const { id, ...values } = input;
         return updateCatalogProduct(id, values);
       }),
@@ -306,7 +339,7 @@ export const appRouter = router({
     coupons: router({
       list: adminProcedure.query(() => listCoupons()),
       create: adminProcedure.input(couponInputSchema).mutation(({ input }) => createCoupon(input)),
-      update: adminProcedure.input(couponInputSchema.partial().extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...values } = input; return updateCoupon(id, values); }),
+      update: adminProcedure.input(couponUpdateInputSchema).mutation(({ input }) => { const { id, ...values } = input; return updateCoupon(id, values); }),
     }),
     reviews: router({
       list: adminProcedure.query(() => listReviewsForAdmin()),
