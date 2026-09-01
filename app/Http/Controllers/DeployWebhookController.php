@@ -15,21 +15,37 @@ class DeployWebhookController extends Controller {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Run git pull and optimization commands
-        $output = [];
-        $returnVar = 0;
+        try {
+            $output = [];
+            $returnVar = 0;
+            $projectRoot = base_path();
 
-        $projectRoot = base_path();
-        $command = "cd {$projectRoot} && git pull origin main 2>&1 && php artisan optimize:clear 2>&1";
+            if (function_exists('exec')) {
+                @exec("cd {$projectRoot} && git pull origin main 2>&1", $output, $returnVar);
+            } elseif (function_exists('shell_exec')) {
+                $raw = @shell_exec("cd {$projectRoot} && git pull origin main 2>&1");
+                $output[] = $raw;
+            } else {
+                $output[] = 'Shell execution functions are disabled in PHP configuration.';
+            }
 
-        exec($command, $output, $returnVar);
+            // Clear cache natively using Artisan
+            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+            $output[] = \Illuminate\Support\Facades\Artisan::output();
 
-        Log::info('[AutoDeploy] Executed deployment: ' . implode("\n", $output));
+            Log::info('[AutoDeploy] Executed deployment: ' . implode("\n", (array)$output));
 
-        return response()->json([
-            'success' => $returnVar === 0,
-            'output' => $output,
-            'message' => 'Deployment executed successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'output' => $output,
+                'message' => 'Deployment executed successfully'
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('[AutoDeploy] Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
