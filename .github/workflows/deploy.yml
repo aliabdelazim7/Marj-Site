@@ -7,11 +7,18 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Production
+    name: Deploy to Production Server
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger Webhook Auto Deploy
-        run: |
-          echo "Triggering Deploy Webhook..."
-          curl -s -X POST "https://maraj.pixelmindeg.com/deploy-webhook?secret=marj_deploy_secret_2026" || true
+      - name: Deploy via SSH to Hostinger
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 92.113.28.65
+          username: u708961508
+          password: ${{ secrets.HOSTINGER_SSH_PASSWORD }}
+          port: 65002
+          script: |
+            cd ~/domains/maraj.pixelmindeg.com/public_html
+            git pull origin main
+            php artisan optimize:clear
