@@ -4,6 +4,10 @@
 
 > هذه النسخة هي snapshot من مشروع مرج بعد آخر checkpoint منشور `1425b591`. لا تحتوي على credentials أو ملفات `.env` أو بيانات عملاء.
 
+## ابدأ من هنا
+
+للتسليم الكامل للفريق التالي، اقرأ [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) أولًا، ثم [`docs/HANDOFF.md`](docs/HANDOFF.md) و[`docs/environment.md`](docs/environment.md) و`verification-notes.md`. يشرح الـProject Brief المشروع من الـFrontend حتى الـBackend والـDatabase والـDeployment وخطة الاستكمال.
+
 ## ما تم بناؤه
 
 ### تجربة العميل

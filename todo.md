@@ -412,7 +412,7 @@ Privacy copy now states that the visitor photo is sent only for the preview requ
 - [x] Audit the selected GitHub repository and current project diff before export.
 - [x] Prepare complete project documentation covering architecture, features, migrations, testing, deployment, integrations, limitations, and operational setup.
 - [x] Verify secrets, environment files, generated artifacts, local logs, and sensitive data are excluded while source code and required migrations/docs remain included.
-- [x] Commit and push the complete site project to `aliabdelazim7/Marj-Site`, then verify the remote tree and commit contents.
+- [x] Commit and push the complete site project to `aliabdelazim7/Marg-Site`, then verify the remote tree and commit contents.
 - [x] Record the repository URL and export details in project documentation and deliver them to the owner.
 
 
@@ -421,3 +421,9 @@ Privacy copy now states that the visitor photo is sent only for the preview requ
 - [x] Document every intentional limitation, deferred item, operational prerequisite, and prohibited behavior so the next team does not fabricate data or re-enable excluded integrations accidentally.
 - [x] Add a prioritized continuation plan with file locations, migration rules, QA gates, rollback guidance, and a first-session checklist.
 - [x] Copy the handoff into the GitHub repository, validate the document against the current source and tests, commit, push, and record the final link.
+
+
+## Complete project brief — 2026-08-30
+- [x] Produce a full Arabic-first project brief from frontend through backend, database, auth, storage, integrations, deployment, QA, limitations, and continuation plan.
+- [x] Cross-check the brief against current source files, README, HANDOFF, migrations, tests, and latest GitHub commit.
+- [x] Copy the brief into the canonical GitHub repository and deliver the document link to the owner.
