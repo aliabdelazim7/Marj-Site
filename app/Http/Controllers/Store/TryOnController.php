@@ -21,7 +21,9 @@ class TryOnController extends Controller {
         $result = $this->tryOnService->generateTryOn(
             base64Image: $request->image_base64,
             productImageUrl: $product->image_url,
-            productName: $product->nameArabic
+            productName: $product->name_arabic ?? $product->name,
+            productColor: $product->variants()->first()?->color ?? '',
+            productDescription: $product->description ?? ''
         );
 
         return response()->json($result);

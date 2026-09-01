@@ -1,0 +1,22 @@
+{
+  "name": "standalone-virtual-try-on",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reusable React and Express-compatible Virtual Try-On feature",
+  "type": "module",
+  "exports": {
+    ".": "./src/VirtualTryOn.tsx",
+    "./types": "./src/types.ts",
+    "./server/handler": "./server/tryOnHandler.ts",
+    "./server/validation": "./server/tryOnValidation.ts",
+    "./server/manus-forge": "./server/manusForgeAdapter.ts",
+    "./styles": "./src/virtual-try-on.css"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  }
+}
